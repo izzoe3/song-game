@@ -188,7 +188,7 @@
     }
 
     async function fetchWords() {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTZ2EwA9Ix1w9nU1yo3kBykUApVnP8HRsDb94hHkLRfRW5fMfAHzH3OWbWxThSyK3EVXMG05MtYmRp7/pub?output=csv';
+      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
       const res = await fetch(sheetURL);
       const text = await res.text();
       const allWords = text.split('\n');
