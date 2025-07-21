@@ -130,7 +130,7 @@
             <option value="">Select Player to Remove</option>
         </select>
         <button onclick="removePlayer()">Remove Player</button>
-        <button onclick="toggleLeaderboard()">Show Leaderboard</button>
+        <button id="toggleLeaderboard" onclick="toggleLeaderboard()">Show Leaderboard</button>
         <div id="feedback"></div>
         <div id="leaderboard">
             <h2>Leaderboard</h2>
@@ -166,7 +166,7 @@
                 return true;
             } catch (error) {
                 console.error('Error:', error);
-                feedback.textContent = 'Error: Could not load Google Sheet. Ensure it’s published as CSV and set to "Anyone with the link" (Viewer). Try hosting on Netlify or using a CORS proxy for local testing.';
+                feedback.textContent = 'Error: Could not load Google Sheet. Ensure it’s published as CSV and set to "Anyone with the link" (Viewer).';
                 feedback.style.color = 'red';
                 return false;
             }
