@@ -2,240 +2,161 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Song Association Game</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="theme-color" content="#111827">
+  <link rel="icon" href="data:,">
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Fredoka', sans-serif;
-    }
-
     body {
-      background: #f4f7fa;
-      color: #333;
-      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      background: #111827;
+      color: white;
+      margin: 0;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
     }
 
-    header {
+    header, main {
       padding: 1rem;
       text-align: center;
-      background: #fff;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: #2c3e50;
     }
 
-    main {
-      flex: 1;
-      padding: 1rem;
+    h1 {
+      margin: 0;
+      font-size: 1.8rem;
     }
 
-    .tabs {
-      display: flex;
-      justify-content: space-around;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-      background: #fff;
-      box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.1rem;
-      border: none;
-      background: none;
-      color: #555;
-    }
-
-    .tab-btn.active {
-      color: #2196f3;
+    #wordDisplay {
+      font-size: 2.5rem;
       font-weight: bold;
-    }
-
-    .tab-page {
-      display: none;
-    }
-
-    .tab-page.active {
-      display: block;
-    }
-
-    .word-display {
-      font-size: 2rem;
-      text-align: center;
       margin: 2rem 0;
     }
 
-    .btn {
-      padding: 0.75rem 1.5rem;
-      background: #2196f3;
-      color: #fff;
+    .controls button {
+      background: #2563eb;
       border: none;
-      border-radius: 8px;
+      color: white;
+      padding: 1rem 2rem;
+      margin: 0.5rem;
       font-size: 1rem;
+      border-radius: 0.5rem;
       cursor: pointer;
-      margin: 0.5rem auto;
-      display: block;
     }
 
-    .player-list {
-      margin-top: 1rem;
+    .controls button:hover {
+      background: #1d4ed8;
     }
 
-    .modal {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
-    }
-
-    .modal-content {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 400px;
+    footer {
+      margin-top: auto;
       text-align: center;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: #9ca3af;
     }
 
-    input, select {
-      padding: 0.5rem;
-      width: 100%;
-      margin: 0.5rem 0;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
+    #scoreBoard {
+      margin-top: 1rem;
+      font-size: 1.2rem;
     }
   </style>
 </head>
 <body>
-  <header>🎤 Song Game</header>
+  <header>
+    <h1>🎵 Song Association Game</h1>
+    <p>Sing a lyric using the given word!</p>
+  </header>
 
   <main>
-    <section id="game" class="tab-page active">
-      <div class="word-display" id="wordDisplay">Loading...</div>
-      <button class="btn" onclick="nextWord()">Next Word</button>
-    </section>
+    <div id="wordDisplay">Loading...</div>
 
-    <section id="settings" class="tab-page">
-      <button class="btn" onclick="resetGame()">Reset Game</button>
-      <div class="player-list" id="playerList"></div>
-    </section>
+    <div class="controls">
+      <button id="startBtn" disabled>Start</button>
+      <button onclick="nextWord()">Next Word</button>
+      <button onclick="addPoint()">+1 Point</button>
+      <button onclick="resetScore()">Reset Score</button>
+    </div>
+
+    <div id="scoreBoard">Score: 0</div>
   </main>
 
-  <nav class="tabs">
-    <button class="tab-btn active" onclick="showTab('game')">🎮 Game</button>
-    <button class="tab-btn" onclick="showTab('settings')">⚙️ Settings</button>
-  </nav>
-
-  <div class="modal" id="setupModal">
-    <div class="modal-content">
-      <h2>Setup Game</h2>
-      <input type="text" id="playerInput" placeholder="Enter player name" />
-      <button class="btn" onclick="addPlayer()">Add Player</button>
-      <select id="languageSelect">
-        <option value="en">English</option>
-        <option value="ms">Malay</option>
-      </select>
-      <button class="btn" onclick="startGame()">Start Game</button>
-    </div>
-  </div>
+  <footer>
+    <p>Made with ❤️ by Zulhimi Amar</p>
+  </footer>
 
   <script>
-    let players = JSON.parse(localStorage.getItem('songGame_players')) || [];
-    let language = localStorage.getItem('songGame_lang') || null;
-    let wordIndex = parseInt(localStorage.getItem('songGame_index')) || 0;
     let words = [];
-
-    const setupModal = document.getElementById('setupModal');
-    const wordDisplay = document.getElementById('wordDisplay');
-    const playerList = document.getElementById('playerList');
-
-    function showTab(tabId) {
-      document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
-
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`).classList.add('active');
-    }
-
-    function addPlayer() {
-      const input = document.getElementById('playerInput');
-      const name = input.value.trim();
-      if (name) {
-        players.push({ name, score: 0 });
-        input.value = '';
-        updatePlayerList();
-      }
-    }
-
-    function updatePlayerList() {
-      playerList.innerHTML = '<h3>Players</h3>' + players.map(p => `<p>${p.name}: ${p.score}</p>`).join('');
-    }
+    let currentWordIndex = 0;
+    let score = 0;
 
     async function fetchWords() {
       const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
       const res = await fetch(sheetURL);
       const text = await res.text();
       const allWords = text.split('\n');
-      words = allWords.filter(w => w.trim()).map(w => w.trim());
-      localStorage.setItem('songGame_words', JSON.stringify(words));
+      const cleaned = allWords.filter(w => w.trim()).map(w => w.trim());
+      localStorage.setItem('songGame_words', JSON.stringify(cleaned));
+      return cleaned;
     }
 
-    function nextWord() {
-      if (wordIndex < words.length) {
-        wordDisplay.textContent = words[wordIndex];
-        wordIndex++;
-        localStorage.setItem('songGame_index', wordIndex);
+    async function init() {
+      const storedWords = localStorage.getItem('songGame_words');
+      if (storedWords) {
+        words = JSON.parse(storedWords);
       } else {
-        wordDisplay.textContent = '🎉 All words used! Refresh list.';
+        words = await fetchWords();
+      }
+
+      if (words.length > 0) {
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('wordDisplay').innerText = 'Press Start';
+      } else {
+        document.getElementById('wordDisplay').innerText = 'No words found!';
       }
     }
 
     function startGame() {
-      language = document.getElementById('languageSelect').value;
-      localStorage.setItem('songGame_players', JSON.stringify(players));
-      localStorage.setItem('songGame_lang', language);
-      localStorage.setItem('songGame_index', 0);
-      setupModal.style.display = 'none';
+      if (!words || words.length === 0) {
+        document.getElementById('wordDisplay').innerText = 'Words not loaded!';
+        return;
+      }
+
+      score = 0;
+      updateScore();
+      currentWordIndex = -1;
       nextWord();
     }
 
-    function resetGame() {
-      if (confirm('Are you sure you want to reset the game?')) {
-        localStorage.clear();
-        location.reload();
+    function nextWord() {
+      if (!words || words.length === 0) {
+        document.getElementById('wordDisplay').innerText = 'Words not loaded!';
+        return;
       }
+
+      currentWordIndex = (currentWordIndex + 1) % words.length;
+      document.getElementById('wordDisplay').innerText = words[currentWordIndex];
     }
 
-    async function init() {
-      updatePlayerList();
-
-      const storedWords = localStorage.getItem('songGame_words');
-      words = storedWords ? JSON.parse(storedWords) : await fetchWords();
-
-      if (!language || players.length === 0) {
-        setupModal.style.display = 'flex';
-      } else {
-        wordDisplay.textContent = words[wordIndex] || 'Start playing!';
-      }
+    function addPoint() {
+      score++;
+      updateScore();
     }
 
-    init();
+    function resetScore() {
+      score = 0;
+      updateScore();
+    }
+
+    function updateScore() {
+      document.getElementById('scoreBoard').innerText = `Score: ${score}`;
+    }
+
+    // Bind start button once DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('startBtn').onclick = startGame;
+      init();
+    });
   </script>
 </body>
 </html>
