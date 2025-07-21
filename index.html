@@ -4,217 +4,161 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0f172a" />
-  <title>Song Association Game</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+  <link rel="icon" href="favicon.ico" />
+  <title>Song Association Game</title>
   <style>
-    * { box-sizing: border-box; }
     body {
-      margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: #f9fafb;
-      color: #111827;
+      margin: 0;
+      background-color: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header, nav, main {
+      padding: 1rem;
+    }
+    header {
+      background-color: #0f172a;
+      color: white;
+      text-align: center;
+    }
+    nav {
+      display: flex;
+      justify-content: space-around;
+      background-color: #e2e8f0;
+    }
+    nav button {
+      flex: 1;
+      padding: 1rem;
+      background: none;
+      border: none;
+      font-size: 1rem;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    .centered {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
+      gap: 1rem;
+      margin-top: 2rem;
     }
-    header {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-    }
-    .hidden { display: none; }
-    #settings, #game-area { max-width: 400px; width: 100%; margin: 1rem 0; }
     button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
+      padding: 0.75rem 1.25rem;
       font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: #0f172a;
+      color: white;
       cursor: pointer;
-      margin-top: 1rem;
-      width: 100%;
-    }
-    button:hover {
-      background: #1d4ed8;
     }
     input, select {
-      width: 100%;
       padding: 0.5rem;
-      margin-top: 0.5rem;
-      margin-bottom: 1rem;
       font-size: 1rem;
+      width: 100%;
     }
-    #word-display {
-      font-size: 2rem;
-      font-weight: bold;
-      text-align: center;
-      margin: 2rem 0;
-    }
-    #scoreboard {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    .player-score {
-      display: flex;
-      justify-content: space-between;
-      background: #e5e7eb;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-    }
-    #settings-toggle {
-      font-size: 0.9rem;
-      background: transparent;
-      color: #2563eb;
-      text-decoration: underline;
+    .scoreboard {
       margin-top: 1rem;
+    }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <header>🎵 Song Association Game</header>
-
-  <div id="setup">
-    <label for="player-names">Enter player names (comma-separated):</label>
-    <input type="text" id="player-names" placeholder="e.g. Alice, Bob, Charlie" />
-
-    <label for="language-select">Choose language:</label>
-    <select id="language-select">
-      <option value="both">Both (EN + MY)</option>
-      <option value="en">English</option>
-      <option value="my">Malay</option>
-    </select>
-
-    <button onclick="startGame()">Start Game</button>
-  </div>
-
-  <div id="game-area" class="hidden">
-    <div id="word-display">Loading...</div>
-
-    <button onclick="nextWord()">Next Word</button>
-
-    <div id="scoreboard"></div>
-
-    <div id="settings">
-      <button onclick="toggleScoreboard()">Toggle Scoreboard</button>
-      <button onclick="promptAddPlayers()">Add Players</button>
-      <button onclick="refreshWordList()">Refresh Word List</button>
-      <button onclick="changeLanguage()">Change Language</button>
-    </div>
-
-    <button id="settings-toggle" onclick="resetGame()">Reset Game</button>
-  </div>
-
+  <header>
+    <h1>Song Association Game</h1>
+  </header>
+  <nav>
+    <button onclick="switchTab('game')">Game</button>
+    <button onclick="switchTab('settings')">Settings</button>
+  </nav>
+  <main>
+    <section id="game" class="tab-content active">
+      <div class="centered">
+        <div id="startScreen">
+          <input id="playerNames" placeholder="Enter player names (comma separated)" />
+          <select id="languageSelect">
+            <option value="english">English</option>
+            <option value="malay">Malay</option>
+            <option value="both">Both</option>
+          </select>
+          <button onclick="startGame()">Start Game</button>
+        </div>
+        <div id="gameScreen" class="hidden">
+          <h2 id="currentWord">...</h2>
+          <p>Current Player: <span id="currentPlayer"></span></p>
+          <button onclick="nextWord()">Next Word</button>
+        </div>
+      </div>
+    </section>
+    <section id="settings" class="tab-content">
+      <div class="centered">
+        <button onclick="resetGame()">Restart Game</button>
+        <button onclick="refreshWords()">Refresh Word List</button>
+        <select id="settingsLanguage" onchange="changeLanguage(this.value)">
+          <option value="english">English</option>
+          <option value="malay">Malay</option>
+          <option value="both">Both</option>
+        </select>
+        <button onclick="toggleScoreboard()">Toggle Leaderboard</button>
+        <div id="scoreboard" class="scoreboard hidden"></div>
+      </div>
+    </section>
+  </main>
   <script>
-    const englishCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
-    const malayCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+    let englishWords = [];
+    let malayWords = [];
+    let combinedWords = [];
+    let players = [];
+    let scores = {};
+    let currentIndex = 0;
+    let currentPlayerIndex = 0;
+    let currentLang = 'english';
 
-    let words = [],
-        allWords = [],
-        currentWord = '',
-        players = [],
-        scores = {},
-        language = 'both';
-
-    const wordDisplay = document.getElementById('word-display');
-    const scoreboard = document.getElementById('scoreboard');
-
-    function loadWords() {
-      const promises = [];
-      if (language === 'en' || language === 'both') {
-        promises.push(fetch(englishCSV).then(res => res.text()));
+    async function fetchWords() {
+      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+      const res = await fetch(sheetURL);
+      const data = await res.text();
+      const rows = data.split('\n');
+      englishWords = [];
+      malayWords = [];
+      for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i].split(',');
+        if (cols[0]) englishWords.push(cols[0].trim());
+        if (cols[1]) malayWords.push(cols[1].trim());
       }
-      if (language === 'my' || language === 'both') {
-        promises.push(fetch(malayCSV).then(res => res.text()));
-      }
-      Promise.all(promises).then(csvs => {
-        allWords = csvs.flatMap(csv => csv.split('\n').map(row => row.trim()).filter(Boolean));
-        words = [...allWords];
-        nextWord();
-      });
     }
 
     function startGame() {
-      const nameInput = document.getElementById('player-names').value.trim();
-      language = document.getElementById('language-select').value;
-      if (!nameInput) return alert('Please enter player names.');
-      players = nameInput.split(',').map(n => n.trim()).filter(Boolean);
-      if (players.length === 0) return alert('Please enter at least one valid player name.');
-      players.forEach(p => scores[p] = 0);
-
-      localStorage.setItem('songGamePlayers', JSON.stringify(players));
-      localStorage.setItem('songGameScores', JSON.stringify(scores));
-      localStorage.setItem('songGameLanguage', language);
-
-      document.getElementById('setup').classList.add('hidden');
-      document.getElementById('game-area').classList.remove('hidden');
-
-      loadWords();
-      updateScoreboard();
-    }
-
-    function nextWord() {
-      if (words.length === 0) words = [...allWords];
-      const index = Math.floor(Math.random() * words.length);
-      currentWord = words.splice(index, 1)[0];
-      wordDisplay.textContent = currentWord;
-    }
-
-    function updateScoreboard() {
-      scoreboard.innerHTML = '';
-      players.forEach(p => {
-        const div = document.createElement('div');
-        div.className = 'player-score';
-        div.innerHTML = `
-          <span>${p}</span>
-          <span>
-            <button onclick="changeScore('${p}', -1)">-</button>
-            ${scores[p]}
-            <button onclick="changeScore('${p}', 1)">+</button>
-          </span>
-        `;
-        scoreboard.appendChild(div);
-      });
-    }
-
-    function changeScore(player, delta) {
-      scores[player] += delta;
-      localStorage.setItem('songGameScores', JSON.stringify(scores));
-      updateScoreboard();
-    }
-
-    function toggleScoreboard() {
-      scoreboard.classList.toggle('hidden');
-    }
-
-    function promptAddPlayers() {
-      const newNames = prompt('Add more players (comma-separated):');
-      if (!newNames) return;
-      newNames.split(',').map(n => n.trim()).filter(Boolean).forEach(p => {
-        if (!scores[p]) {
-          players.push(p);
-          scores[p] = 0;
-        }
-      });
-      localStorage.setItem('songGamePlayers', JSON.stringify(players));
-      localStorage.setItem('songGameScores', JSON.stringify(scores));
-      updateScoreboard();
-    }
-
-    function refreshWordList() {
-      words = [...allWords];
+      const nameInput = document.getElementById('playerNames').value;
+      players = nameInput.split(',').map(n => n.trim()).filter(n => n);
+      scores = Object.fromEntries(players.map(p => [p, 0]));
+      currentLang = document.getElementById('languageSelect').value;
+      localStorage.setItem('language', currentLang);
+      combinedWords = currentLang === 'english' ? [...englishWords] : currentLang === 'malay' ? [...malayWords] : [...englishWords, ...malayWords];
+      shuffle(combinedWords);
+      currentIndex = 0;
+      currentPlayerIndex = 0;
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
       nextWord();
     }
 
-    function changeLanguage() {
-      const lang = prompt('Enter language: en / my / both');
-      if (!['en', 'my', 'both'].includes(lang)) return alert('Invalid input.');
-      language = lang;
-      localStorage.setItem('songGameLanguage', language);
-      loadWords();
+    function nextWord() {
+      if (combinedWords.length === 0) return;
+      if (currentIndex >= combinedWords.length) currentIndex = 0;
+      const word = combinedWords[currentIndex++];
+      document.getElementById('currentWord').textContent = word;
+      document.getElementById('currentPlayer').textContent = players[currentPlayerIndex];
+      currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
     }
 
     function resetGame() {
@@ -222,21 +166,46 @@
       location.reload();
     }
 
-    // Restore previous state
-    window.onload = () => {
-      const savedPlayers = JSON.parse(localStorage.getItem('songGamePlayers') || '[]');
-      const savedScores = JSON.parse(localStorage.getItem('songGameScores') || '{}');
-      const savedLanguage = localStorage.getItem('songGameLanguage') || 'both';
-      if (savedPlayers.length > 0) {
-        players = savedPlayers;
-        scores = savedScores;
-        language = savedLanguage;
-        document.getElementById('setup').classList.add('hidden');
-        document.getElementById('game-area').classList.remove('hidden');
-        loadWords();
-        updateScoreboard();
+    function changeLanguage(lang) {
+      currentLang = lang;
+      document.getElementById('languageSelect').value = lang;
+    }
+
+    function toggleScoreboard() {
+      const el = document.getElementById('scoreboard');
+      if (el.classList.contains('hidden')) {
+        el.innerHTML = players.map(p => `<p>${p}: ${scores[p] || 0}</p>`).join('');
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
       }
     }
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    async function refreshWords() {
+      await fetchWords();
+      alert('Word list updated!');
+    }
+
+    window.addEventListener('load', async () => {
+      await fetchWords();
+      const savedLang = localStorage.getItem('language');
+      if (savedLang) {
+        document.getElementById('languageSelect').value = savedLang;
+        document.getElementById('settingsLanguage').value = savedLang;
+      }
+    });
   </script>
 </body>
 </html>
