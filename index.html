@@ -2,28 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Song Association Game</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            font-family: 'Poppins', Arial, sans-serif;
+            font-family: 'Montserrat', 'Poppins', Arial, sans-serif;
             margin: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, #f0e4ff, #ffe4e1);
+            background: linear-gradient(45deg, #1a1a3d, #2a2a5e);
+            background-size: 200% 200%;
+            animation: gradientShift 15s ease infinite;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            overflow-x: hidden;
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: #1a1a3d;
+            color: #fff;
+            text-align: center;
+            padding: 15px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            margin: 0;
         }
         .container {
             max-width: 600px;
             width: 90%;
-            background-color: white;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: linear-gradient(145deg, #2c2c54, #35357a);
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             padding: 20px;
-            margin: 10px;
+            margin: 70px 10px 20px;
         }
         .tabs {
             display: flex;
@@ -32,100 +55,126 @@
         }
         .tab-button {
             flex: 1;
-            padding: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            background-color: #e0e0e0;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: #3a3a6e;
+            color: #fff;
             border: none;
             border-radius: 10px 10px 0 0;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: transform 0.2s, background 0.3s;
         }
         .tab-button.active {
-            background-color: #20c997;
-            color: white;
+            background: linear-gradient(45deg, #00d4ff, #ff007a);
+            color: #fff;
         }
         .tab-button:hover, .tab-button:active {
-            background-color: #17a589;
-            color: white;
+            transform: scale(1.05);
+            background: #00b4d8;
         }
         h1 {
-            color: #2d3748;
-            font-size: 24px;
+            color: #fff;
+            font-size: 1.6rem;
             text-align: center;
             margin: 10px 0;
         }
         select, button, input {
             margin: 10px auto;
-            padding: 12px;
-            font-size: 16px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            padding: 15px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 10px;
             width: 100%;
             box-sizing: border-box;
             display: block;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s;
         }
         button {
-            background-color: #ff6b6b;
-            color: white;
-            font-weight: 600;
+            background: linear-gradient(45deg, #ff007a, #00d4ff);
+            color: #fff;
+            font-weight: 700;
             cursor: pointer;
-            transition: background-color 0.3s;
-            min-height: 48px;
+            min-height: 60px;
+            position: relative;
+            overflow: hidden;
         }
         button:hover, button:active {
-            background-color: #e65b5b;
+            transform: scale(1.05);
         }
         button:disabled {
-            background-color: #cccccc;
+            background: #666;
             cursor: not-allowed;
         }
         button.score-btn {
-            width: 48px;
-            display: inline-block;
-            margin: 5px;
-            font-size: 14px;
+            width: 50px;
+            min-height: 40px;
+            font-size: 0.9rem;
+        }
+        button i {
+            margin-right: 8px;
+        }
+        .ripple {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: rippleEffect 0.6s linear;
+            pointer-events: none;
+        }
+        @keyframes rippleEffect {
+            to { transform: scale(4); opacity: 0; }
         }
         #wordDisplay {
-            font-size: 36px;
-            font-weight: 600;
-            color: #2d3748;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #00d4ff;
             margin: 30px 0;
             text-align: center;
             padding: 20px;
-            background-color: #f8fafc;
-            border-radius: 10px;
+            background: #2c2c54;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         #feedback {
             margin-top: 10px;
-            font-size: 16px;
+            font-size: 1rem;
             font-weight: 500;
             text-align: center;
+            color: #fff;
         }
         #feedback.green {
-            color: #28a745;
+            color: #00ff85;
         }
         #feedback.red {
-            color: #dc3545;
+            color: #ff4d4d;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         #leaderboard {
             margin-top: 20px;
             text-align: left;
-            display: none;
         }
         #leaderboard h2 {
-            font-size: 20px;
+            font-size: 1.2rem;
             margin-bottom: 10px;
-            color: #2d3748;
+            color: #fff;
         }
         #leaderboard ul {
             list-style: none;
             padding: 0;
         }
         #leaderboard li {
-            font-size: 16px;
+            font-size: 1rem;
             margin: 8px 0;
-            color: #4a5568;
+            color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -137,74 +186,101 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.7);
             align-items: center;
             justify-content: center;
             z-index: 1000;
         }
         .modal-content {
-            background-color: white;
+            background: #2c2c54;
             padding: 20px;
-            border-radius: 15px;
+            border-radius: 20px;
             max-width: 500px;
             width: 90%;
             text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.3s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         .modal-content input, .modal-content select {
             margin: 10px auto;
             width: 100%;
             box-sizing: border-box;
         }
-        @media (max-width: 768px) {
+        .modal-content p {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+        .hidden {
+            display: none;
+        }
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
             h1 {
-                font-size: 20px;
+                font-size: 1.4rem;
             }
             #wordDisplay {
-                font-size: 32px;
+                font-size: 2rem;
                 padding: 15px;
             }
             select, button, input {
-                font-size: 14px;
-                padding: 10px;
+                font-size: 0.9rem;
+                padding: 12px;
             }
             .tab-button {
-                font-size: 16px;
+                font-size: 0.9rem;
             }
             button.score-btn {
                 width: 40px;
-                font-size: 12px;
+                font-size: 0.8rem;
             }
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1>Song Association Game</h1>
+    </div>
+    <div id="modeModal" class="modal" style="display: flex;">
+        <div class="modal-content">
+            <h2>Choose Game Mode</h2>
+            <p>Casual Mode: Generate words without players or scoring.<br>Regular Mode: Play with players, scoring, and leaderboard.</p>
+            <button onclick="selectMode('casual')"><i class="fas fa-play"></i>Casual Mode</button>
+            <button onclick="selectMode('regular')"><i class="fas fa-users"></i>Regular Mode</button>
+        </div>
+    </div>
     <div id="playerModal" class="modal">
         <div class="modal-content">
-            <h2>Setup Game</h2>
+            <h2 id="setupTitle">Setup Game</h2>
             <input type="text" id="playerInput" placeholder="Enter player names (e.g., Ali, Siti)">
             <select id="languageSelect">
                 <option value="en">English</option>
                 <option value="ms">Malay</option>
                 <option value="both">Both</option>
             </select>
-            <p>Words are loaded from a Google Sheet. Add new words there and click "Refresh Word List" in Settings.</p>
-            <button onclick="startGame()">Start Game</button>
+            <p>Words are loaded from a Google Sheet. Add new words there and click "Refresh Word List" in Settings (Regular Mode only).</p>
+            <button onclick="startGame()"><i class="fas fa-play"></i>Start Game</button>
         </div>
     </div>
     <div class="container">
         <div class="tabs">
-            <button class="tab-button active" onclick="showTab('game')">Game</button>
-            <button class="tab-button" onclick="showTab('settings')">Settings</button>
+            <button class="tab-button active" onclick="showTab('game')"><i class="fas fa-gamepad"></i> Game</button>
+            <button id="settingsTabButton" class="tab-button" onclick="showTab('settings')"><i class="fas fa-cog"></i> Settings</button>
         </div>
         <div id="gameTab" class="tab-content">
             <h1>Song Association Game</h1>
-            <div id="wordDisplay"></div>
+            <div id="wordDisplay">Loading...</div>
             <select id="playerSelect" onchange="enableGenerateButton()">
                 <option value="">Select Player</option>
             </select>
-            <button id="generateWordBtn" onclick="generateWord()" disabled>Generate New Word</button>
-            <button onclick="skipWord()">Skip Word</button>
+            <button id="generateWordBtn" onclick="generateWord()"><i class="fas fa-sync-alt"></i> Generate New Word</button>
+            <button id="skipWordBtn" onclick="skipWord()"><i class="fas fa-forward"></i> Skip Word</button>
+            <button id="resetModeBtn" onclick="resetGame()" class="hidden"><i class="fas fa-redo"></i> Reset/Change Mode</button>
             <select id="languageChangeSelect" onchange="changeLanguage()">
                 <option value="en">English</option>
                 <option value="ms">Malay</option>
@@ -215,13 +291,13 @@
         <div id="settingsTab" class="tab-content" style="display: none;">
             <h1>Settings</h1>
             <input type="text" id="addPlayerInput" placeholder="Enter new player name">
-            <button onclick="addPlayer()">Add Player</button>
+            <button onclick="addPlayer()"><i class="fas fa-user-plus"></i> Add Player</button>
             <select id="removePlayerSelect">
                 <option value="">Select Player to Remove</option>
             </select>
-            <button onclick="removePlayer()">Remove Player</button>
-            <button onclick="refreshWordList()">Refresh Word List</button>
-            <button id="toggleLeaderboard" onclick="toggleLeaderboard()">Show Leaderboard</button>
+            <button onclick="removePlayer()"><i class="fas fa-user-minus"></i> Remove Player</button>
+            <button onclick="refreshWordList()"><i class="fas fa-sync"></i> Refresh Word List</button>
+            <button id="toggleLeaderboard" onclick="toggleLeaderboard()"><i class="fas fa-trophy"></i> Show Leaderboard</button>
             <div id="leaderboard">
                 <h2>Leaderboard</h2>
                 <ul id="leaderboardList"></ul>
@@ -235,97 +311,193 @@
         let currentWord = '';
         let languageMode = 'en';
         let useEnglish = true;
+        let gameMode = 'regular';
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let wordLists = { english: [], malay: [] };
 
-        // Show setup modal on page load
-        document.getElementById('playerModal').style.display = 'flex';
+        // Show mode selection modal on page load
+        document.getElementById('modeModal').style.display = 'flex';
+
+        // Add ripple effect and haptic feedback on button clicks
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (navigator.vibrate) navigator.vibrate(50);
+                const rect = btn.getBoundingClientRect();
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                const diameter = Math.max(btn.clientWidth, btn.clientHeight);
+                const radius = diameter / 2;
+                ripple.style.width = ripple.style.height = `${diameter}px`;
+                ripple.style.left = `${e.clientX - rect.left - radius}px`;
+                ripple.style.top = `${e.clientY - rect.top - radius}px`;
+                btn.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        function selectMode(mode) {
+            gameMode = mode;
+            document.getElementById('modeModal').style.display = 'none';
+            document.getElementById('playerModal').style.display = 'flex';
+            const playerInput = document.getElementById('playerInput');
+            const setupTitle = document.getElementById('setupTitle');
+            if (gameMode === 'casual') {
+                playerInput.classList.add('hidden');
+                setupTitle.textContent = 'Setup Word Generator';
+            } else {
+                playerInput.classList.remove('hidden');
+                setupTitle.textContent = 'Setup Game';
+            }
+        }
+
+        function resetGame() {
+            players = {};
+            wordLists = { english: [], malay: [] };
+            currentWord = '';
+            languageMode = 'en';
+            useEnglish = true;
+            document.getElementById('wordDisplay').textContent = '';
+            document.getElementById('wordDisplay').classList.remove('fade-in');
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').classList.remove('fade-in');
+            document.getElementById('playerSelect').innerHTML = '<option value="">Select Player</option>';
+            document.getElementById('removePlayerSelect').innerHTML = '<option value="">Select Player to Remove</option>';
+            document.getElementById('leaderboardList').innerHTML = '';
+            document.getElementById('gameTab').style.display = 'none';
+            document.getElementById('settingsTab').style.display = 'none';
+            document.getElementById('modeModal').style.display = 'flex';
+            document.getElementById('settingsTabButton').classList.remove('hidden');
+            document.getElementById('playerSelect').classList.remove('hidden');
+            document.getElementById('skipWordBtn').classList.remove('hidden');
+            document.getElementById('resetModeBtn').classList.add('hidden');
+            document.getElementById('generateWordBtn').disabled = true;
+            console.log('Game reset, showing mode selection');
+        }
 
         function showTab(tabName) {
+            if (gameMode === 'casual' && tabName === 'settings') {
+                return; // Prevent showing Settings tab in casual mode
+            }
             document.getElementById('gameTab').style.display = tabName === 'game' ? 'block' : 'none';
             document.getElementById('settingsTab').style.display = tabName === 'settings' ? 'block' : 'none';
             document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
             document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
             document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').classList.remove('fade-in');
             document.getElementById('feedbackSettings').textContent = '';
+            document.getElementById('feedbackSettings').classList.remove('fade-in');
             enableGenerateButton();
         }
 
         async function fetchWords() {
             const feedback = document.getElementById('feedbackSettings') || document.getElementById('feedback');
             try {
-                const response = await fetch(sheetUrl);
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Fetch timeout: Unable to load words within 10 seconds')), 10000);
+                });
+                const fetchPromise = fetch(sheetUrl);
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
                 if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch Google Sheet`);
                 const csvText = await response.text();
                 const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
                 wordLists.malay = rows.slice(1).map(row => row[0]).filter(word => word && word !== '');
                 wordLists.english = rows.slice(1).map(row => row[1]).filter(word => word && word !== '');
+                console.log('Fetched words:', { english: wordLists.english.length, malay: wordLists.malay.length });
                 if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
                     throw new Error('No valid words found in the Google Sheet');
                 }
                 feedback.textContent = 'Word list loaded successfully!';
-                feedback.className = 'green';
+                feedback.className = 'green fade-in';
                 return true;
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error fetching words:', error.message);
                 feedback.textContent = 'Error: Could not load Google Sheet. Ensure it’s published as CSV and set to "Anyone with the link" (Viewer).';
-                feedback.className = 'red';
+                feedback.className = 'red fade-in';
                 return false;
             }
         }
 
         async function startGame() {
-            const playerInput = document.getElementById('playerInput').value.trim();
+            // Reset state to ensure clean start
+            players = {};
+            wordLists = { english: [], malay: [] };
+            currentWord = '';
             languageMode = document.getElementById('languageSelect').value;
-            if (!playerInput) {
-                alert('Please enter at least one player name.');
-                return;
+            if (gameMode === 'regular') {
+                const playerInput = document.getElementById('playerInput').value.trim();
+                if (!playerInput) {
+                    alert('Please enter at least one player name.');
+                    return;
+                }
+                const playerNames = playerInput.split(',').map(name => name.trim()).filter(name => name);
+                if (playerNames.length === 0) {
+                    alert('Please enter valid player names.');
+                    return;
+                }
+                playerNames.forEach(name => {
+                    players[name] = 0;
+                });
             }
-            const playerNames = playerInput.split(',').map(name => name.trim()).filter(name => name);
-            if (playerNames.length === 0) {
-                alert('Please enter valid player names.');
-                return;
-            }
+            document.getElementById('wordDisplay').textContent = 'Loading words...';
+            document.getElementById('wordDisplay').classList.remove('fade-in');
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').classList.remove('fade-in');
             const wordsLoaded = await fetchWords();
             if (!wordsLoaded) {
                 document.getElementById('wordDisplay').textContent = 'Error: No words available.';
-                document.getElementById('feedback').textContent = 'No words available. Add words to the Google Sheet and click "Refresh Word List" in Settings.';
+                document.getElementById('wordDisplay').classList.add('fade-in');
+                document.getElementById('feedback').textContent = 'No words available. Add words to the Google Sheet and click "Refresh Word List" in Settings (Regular Mode only).';
+                document.getElementById('feedback').classList.add('fade-in');
                 document.getElementById('feedback').className = 'red';
                 return;
             }
-            playerNames.forEach(name => {
-                players[name] = 0;
-            });
+            const availableWords = languageMode === 'en' ? wordLists.english : languageMode === 'ms' ? wordLists.malay : [...wordLists.english, ...wordLists.malay];
+            if (availableWords.length === 0) {
+                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+                document.getElementById('wordDisplay').classList.add('fade-in');
+                document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings (Regular Mode only).`;
+                document.getElementById('feedback').classList.add('fade-in');
+                document.getElementById('feedback').className = 'red';
+                return;
+            }
             updatePlayerSelect();
             updateRemovePlayerSelect();
             updateLeaderboard();
             document.getElementById('languageChangeSelect').value = languageMode;
             document.getElementById('playerModal').style.display = 'none';
             document.getElementById('gameTab').style.display = 'block';
-            // Generate initial word after confirming word lists are populated
-            const availableWords = languageMode === 'en' ? wordLists.english : languageMode === 'ms' ? wordLists.malay : [...wordLists.english, ...wordLists.malay];
-            if (availableWords.length > 0) {
-                generateWord();
+            if (gameMode === 'casual') {
+                document.getElementById('settingsTabButton').classList.add('hidden');
+                document.getElementById('playerSelect').classList.add('hidden');
+                document.getElementById('skipWordBtn').classList.add('hidden');
+                document.getElementById('resetModeBtn').classList.remove('hidden');
+                document.getElementById('generateWordBtn').disabled = false;
             } else {
-                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
-                document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
-                document.getElementById('feedback').className = 'red';
+                document.getElementById('settingsTabButton').classList.remove('hidden');
+                document.getElementById('playerSelect').classList.remove('hidden');
+                document.getElementById('skipWordBtn').classList.remove('hidden');
+                document.getElementById('resetModeBtn').classList.add('hidden');
+                document.getElementById('generateWordBtn').disabled = true;
             }
+            console.log('Starting game with mode:', gameMode, 'language:', languageMode, 'players:', Object.keys(players), 'available words:', availableWords.length);
+            generateWord(true); // Generate initial word
         }
 
         async function refreshWordList() {
+            if (gameMode === 'casual') return; // Disabled in casual mode
             const feedback = document.getElementById('feedbackSettings');
             feedback.textContent = 'Refreshing word list...';
-            feedback.className = '';
+            feedback.className = 'fade-in';
             const success = await fetchWords();
             if (success) {
                 feedback.textContent = 'Word list refreshed! Return to Game tab to continue.';
-                feedback.className = 'green';
-                generateWord(); // Generate new word after refresh
+                feedback.className = 'green fade-in';
+                generateWord(true); // Generate new word after refresh
             }
         }
 
         function updatePlayerSelect() {
+            if (gameMode === 'casual') return;
             const playerSelect = document.getElementById('playerSelect');
             const previousValue = playerSelect.value;
             playerSelect.innerHTML = '<option value="">Select Player</option>';
@@ -340,6 +512,7 @@
         }
 
         function updateRemovePlayerSelect() {
+            if (gameMode === 'casual') return;
             const removePlayerSelect = document.getElementById('removePlayerSelect');
             removePlayerSelect.innerHTML = '<option value="">Select Player to Remove</option>';
             Object.keys(players).forEach(name => {
@@ -351,69 +524,79 @@
         }
 
         function updateLeaderboard() {
+            if (gameMode === 'casual') return;
             const leaderboardList = document.getElementById('leaderboardList');
             leaderboardList.innerHTML = '';
             Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
                 const li = document.createElement('li');
-                li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')">+</button><button class="score-btn" onclick="decrementScore('${name}')">–</button>`;
+                li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')"><i class="fas fa-plus"></i></button><button class="score-btn" onclick="decrementScore('${name}')"><i class="fas fa-minus"></i></button>`;
                 leaderboardList.appendChild(li);
             });
         }
 
         function incrementScore(player) {
+            if (gameMode === 'casual') return;
             players[player] += 1;
             updateLeaderboard();
             updatePlayerSelect();
             document.getElementById('feedbackSettings').textContent = `Added 1 point to ${player}.`;
-            document.getElementById('feedbackSettings').className = 'green';
+            document.getElementById('feedbackSettings').className = 'green fade-in';
         }
 
         function decrementScore(player) {
+            if (gameMode === 'casual') return;
             if (players[player] > 0) {
                 players[player] -= 1;
                 updateLeaderboard();
                 updatePlayerSelect();
                 document.getElementById('feedbackSettings').textContent = `Removed 1 point from ${player}.`;
-                document.getElementById('feedbackSettings').className = 'green';
+                document.getElementById('feedbackSettings').className = 'green fade-in';
             } else {
                 document.getElementById('feedbackSettings').textContent = `${player} already has 0 points.`;
-                document.getElementById('feedbackSettings').className = 'red';
+                document.getElementById('feedbackSettings').className = 'red fade-in';
             }
         }
 
         function toggleLeaderboard() {
+            if (gameMode === 'casual') return;
             const leaderboard = document.getElementById('leaderboard');
             const button = document.getElementById('toggleLeaderboard');
             if (leaderboard.style.display === 'none') {
                 leaderboard.style.display = 'block';
-                button.textContent = 'Hide Leaderboard';
+                button.innerHTML = '<i class="fas fa-trophy"></i> Hide Leaderboard';
             } else {
                 leaderboard.style.display = 'none';
-                button.textContent = 'Show Leaderboard';
+                button.innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
             }
         }
 
         function enableGenerateButton() {
+            if (gameMode === 'casual') return;
             const player = document.getElementById('playerSelect').value;
             const generateBtn = document.getElementById('generateWordBtn');
             generateBtn.disabled = !player;
         }
 
-        function generateWord() {
+        function generateWord(initial = false) {
             const player = document.getElementById('playerSelect').value;
             const feedback = document.getElementById('feedback');
             const generateBtn = document.getElementById('generateWordBtn');
 
-            if (!player) {
+            if (gameMode === 'regular' && !initial && !player) {
                 feedback.textContent = 'Please select a player to generate a new word.';
-                feedback.className = 'red';
+                feedback.className = 'red fade-in';
                 generateBtn.disabled = true;
                 return;
             }
 
-            players[player] += 1;
-            feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
-            feedback.className = 'green';
+            if (gameMode === 'regular' && !initial && player) {
+                players[player] += 1;
+                feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
+                feedback.className = 'green fade-in';
+            } else if (gameMode === 'casual') {
+                feedback.textContent = 'New word generated!';
+                feedback.className = 'green fade-in';
+            }
 
             let lang = languageMode;
             if (languageMode === 'both') {
@@ -423,19 +606,28 @@
             const wordList = lang === 'en' ? wordLists.english : wordLists.malay;
             if (wordList.length === 0) {
                 document.getElementById('wordDisplay').textContent = 'Error: No words available.';
-                document.getElementById('feedback').textContent = `No ${lang === 'en' ? 'English' : 'Malay'} words available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
-                document.getElementById('feedback').className = 'red';
-                generateBtn.disabled = true;
+                document.getElementById('wordDisplay').classList.add('fade-in');
+                document.getElementById('feedback').textContent = `No ${lang === 'en' ? 'English' : 'Malay'} words available. Add words to the Google Sheet and click "Refresh Word List" in Settings (Regular Mode only).`;
+                document.getElementById('feedback').className = 'red fade-in';
+                if (gameMode === 'regular') generateBtn.disabled = true;
                 return;
             }
             currentWord = wordList[Math.floor(Math.random() * wordList.length)];
             document.getElementById('wordDisplay').textContent = currentWord;
-            document.getElementById('playerSelect').value = '';
-            generateBtn.disabled = true;
+            document.getElementById('wordDisplay').classList.add('fade-in');
+            if (gameMode === 'regular' && !initial) {
+                document.getElementById('playerSelect').value = '';
+                generateBtn.disabled = true;
+            }
+            if (gameMode === 'casual') {
+                generateBtn.disabled = false; // Always enabled in casual mode
+            }
             updateLeaderboard();
+            console.log('Generated word:', currentWord, 'for language:', lang);
         }
 
         function skipWord() {
+            if (gameMode === 'casual') return; // Disabled in casual mode
             let wordList;
             if (languageMode === 'both') {
                 wordList = Math.random() < 0.5 ? wordLists.english : wordLists.malay;
@@ -444,30 +636,34 @@
             }
             if (wordList.length === 0) {
                 document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+                document.getElementById('wordDisplay').classList.add('fade-in');
                 document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
-                document.getElementById('feedback').className = 'red';
+                document.getElementById('feedback').className = 'red fade-in';
                 document.getElementById('generateWordBtn').disabled = true;
                 return;
             }
             currentWord = wordList[Math.floor(Math.random() * wordList.length)];
             document.getElementById('wordDisplay').textContent = currentWord;
+            document.getElementById('wordDisplay').classList.add('fade-in');
             document.getElementById('playerSelect').value = '';
             document.getElementById('generateWordBtn').disabled = true;
             document.getElementById('feedback').textContent = 'Word skipped! New word generated.';
-            document.getElementById('feedback').className = 'green';
+            document.getElementById('feedback').className = 'green fade-in';
+            console.log('Skipped to word:', currentWord);
         }
 
         function addPlayer() {
+            if (gameMode === 'casual') return;
             const newPlayer = document.getElementById('addPlayerInput').value.trim();
             const feedback = document.getElementById('feedbackSettings');
             if (!newPlayer) {
                 feedback.textContent = 'Please enter a player name to add.';
-                feedback.className = 'red';
+                feedback.className = 'red fade-in';
                 return;
             }
             if (players[newPlayer]) {
                 feedback.textContent = `Player "${newPlayer}" already exists.`;
-                feedback.className = 'red';
+                feedback.className = 'red fade-in';
                 return;
             }
             players[newPlayer] = 0;
@@ -476,15 +672,16 @@
             updateLeaderboard();
             document.getElementById('addPlayerInput').value = '';
             feedback.textContent = `Player "${newPlayer}" added!`;
-            feedback.className = 'green';
+            feedback.className = 'green fade-in';
         }
 
         function removePlayer() {
+            if (gameMode === 'casual') return;
             const playerToRemove = document.getElementById('removePlayerSelect').value;
             const feedback = document.getElementById('feedbackSettings');
             if (!playerToRemove) {
                 feedback.textContent = 'Please select a player to remove.';
-                feedback.className = 'red';
+                feedback.className = 'red fade-in';
                 return;
             }
             delete players[playerToRemove];
@@ -492,15 +689,15 @@
             updateRemovePlayerSelect();
             updateLeaderboard();
             feedback.textContent = `Player "${playerToRemove}" removed!`;
-            feedback.className = 'green';
+            feedback.className = 'green fade-in';
         }
 
         function changeLanguage() {
             languageMode = document.getElementById('languageChangeSelect').value;
             useEnglish = true; // Reset alternation for "Both" mode
             document.getElementById('feedback').textContent = `Language changed to ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'Both'}.`;
-            document.getElementById('feedback').className = 'green';
-            generateWord(); // Generate new word on language change
+            document.getElementById('feedback').className = 'green fade-in';
+            generateWord(true); // Generate new word on language change
         }
     </script>
 </body>
