@@ -56,6 +56,7 @@
         #leaderboard {
             margin-top: 20px;
             text-align: left;
+            display: none;
         }
         #leaderboard h2 {
             font-size: 18px;
@@ -111,11 +112,25 @@
     <div class="container" id="gameContainer" style="display: none;">
         <h1>Song Association Game</h1>
         <div id="wordDisplay">Click "Generate New Word" to start!</div>
-        <select id="playerSelect"></select>
-        <input type="text" id="songInput" placeholder="Enter the song title you sang">
-        <button onclick="checkSong()">Submit Song</button>
+        <select id="playerSelect">
+            <option value="">Select Player</option>
+        </select>
+        <button onclick="checkSong()">Submit (I Sang a Song!)</button>
         <button onclick="generateWord()">Generate New Word</button>
+        <button onclick="skipWord()">Skip Word</button>
         <button onclick="refreshWordList()">Refresh Word List</button>
+        <select id="languageChangeSelect" onchange="changeLanguage()">
+            <option value="en">English</option>
+            <option value="ms">Malay</option>
+            <option value="both">Both</option>
+        </select>
+        <input type="text" id="addPlayerInput" placeholder="Enter new player name">
+        <button onclick="addPlayer()">Add Player</button>
+        <select id="removePlayerSelect">
+            <option value="">Select Player to Remove</option>
+        </select>
+        <button onclick="removePlayer()">Remove Player</button>
+        <button onclick="toggleLeaderboard()">Show Leaderboard</button>
         <div id="feedback"></div>
         <div id="leaderboard">
             <h2>Leaderboard</h2>
@@ -128,7 +143,6 @@
         let currentWord = '';
         let languageMode = 'en';
         let useEnglish = true;
-        // Replace with your Google Sheet's published CSV URL
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let wordLists = { english: [], malay: [] };
 
@@ -139,10 +153,9 @@
             const feedback = document.getElementById('feedback');
             try {
                 const response = await fetch(sheetUrl);
-                if (!response.ok) throw new Error('Failed to fetch Google Sheet');
+                if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch Google Sheet`);
                 const csvText = await response.text();
                 const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
-                // Skip header row and filter valid words
                 wordLists.malay = rows.slice(1).map(row => row[0]).filter(word => word && word !== '');
                 wordLists.english = rows.slice(1).map(row => row[1]).filter(word => word && word !== '');
                 if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
@@ -153,7 +166,7 @@
                 return true;
             } catch (error) {
                 console.error('Error:', error);
-                feedback.textContent = 'Error: Could not load Google Sheet. Ensure the URL is correct and public.';
+                feedback.textContent = 'Error: Could not load Google Sheet. Ensure it’s published as CSV and set to "Anyone with the link" (Viewer). Try hosting on Netlify or using a CORS proxy for local testing.';
                 feedback.style.color = 'red';
                 return false;
             }
@@ -177,7 +190,9 @@
                 players[name] = 0;
             });
             updatePlayerSelect();
+            updateRemovePlayerSelect();
             updateLeaderboard();
+            document.getElementById('languageChangeSelect').value = languageMode;
             document.getElementById('playerModal').style.display = 'none';
             document.getElementById('gameContainer').style.display = 'block';
         }
@@ -194,12 +209,23 @@
 
         function updatePlayerSelect() {
             const playerSelect = document.getElementById('playerSelect');
-            playerSelect.innerHTML = '';
+            playerSelect.innerHTML = '<option value="">Select Player</option>';
             Object.keys(players).forEach(name => {
                 const option = document.createElement('option');
                 option.value = name;
                 option.textContent = name;
                 playerSelect.appendChild(option);
+            });
+        }
+
+        function updateRemovePlayerSelect() {
+            const removePlayerSelect = document.getElementById('removePlayerSelect');
+            removePlayerSelect.innerHTML = '<option value="">Select Player to Remove</option>';
+            Object.keys(players).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                removePlayerSelect.appendChild(option);
             });
         }
 
@@ -211,6 +237,18 @@
                 li.textContent = `${name}: ${score} points`;
                 leaderboardList.appendChild(li);
             });
+        }
+
+        function toggleLeaderboard() {
+            const leaderboard = document.getElementById('leaderboard');
+            const button = document.getElementById('toggleLeaderboard');
+            if (leaderboard.style.display === 'none') {
+                leaderboard.style.display = 'block';
+                button.textContent = 'Hide Leaderboard';
+            } else {
+                leaderboard.style.display = 'none';
+                button.textContent = 'Show Leaderboard';
+            }
         }
 
         function generateWord() {
@@ -228,31 +266,77 @@
             }
             currentWord = wordList[Math.floor(Math.random() * wordList.length)];
             document.getElementById('wordDisplay').textContent = `Word: ${currentWord} (${lang === 'en' ? 'English' : 'Malay'})`;
-            document.getElementById('songInput').value = '';
+            document.getElementById('playerSelect').value = '';
             document.getElementById('feedback').textContent = '';
+        }
+
+        function skipWord() {
+            generateWord();
+            document.getElementById('feedback').textContent = 'Word skipped! New word generated.';
+            document.getElementById('feedback').style.color = '#555';
         }
 
         function checkSong() {
             const player = document.getElementById('playerSelect').value;
-            const songInput = document.getElementById('songInput').value.trim();
             const feedback = document.getElementById('feedback');
 
-            if (!songInput) {
-                feedback.textContent = 'Please enter the song title you sang.';
+            if (!player) {
+                feedback.textContent = 'Please select a player.';
                 feedback.style.color = 'red';
                 return;
             }
 
-            if (songInput.toLowerCase().includes(currentWord.toLowerCase())) {
-                players[player] += 1;
-                feedback.textContent = `Nice singing! "${songInput}" contains "${currentWord}". ${player} earns 1 point!`;
-                feedback.style.color = 'green';
-            } else {
-                feedback.textContent = `Sorry, "${songInput}" does not contain "${currentWord}". Try another song!`;
-                feedback.style.color = 'red';
-            }
-
+            players[player] += 1;
+            feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
+            feedback.style.color = 'green';
             updateLeaderboard();
+            document.getElementById('playerSelect').value = '';
+        }
+
+        function addPlayer() {
+            const newPlayer = document.getElementById('addPlayerInput').value.trim();
+            const feedback = document.getElementById('feedback');
+            if (!newPlayer) {
+                feedback.textContent = 'Please enter a player name to add.';
+                feedback.style.color = 'red';
+                return;
+            }
+            if (players[newPlayer]) {
+                feedback.textContent = `Player "${newPlayer}" already exists.`;
+                feedback.style.color = 'red';
+                return;
+            }
+            players[newPlayer] = 0;
+            updatePlayerSelect();
+            updateRemovePlayerSelect();
+            updateLeaderboard();
+            document.getElementById('addPlayerInput').value = '';
+            feedback.textContent = `Player "${newPlayer}" added!`;
+            feedback.style.color = 'green';
+        }
+
+        function removePlayer() {
+            const playerToRemove = document.getElementById('removePlayerSelect').value;
+            const feedback = document.getElementById('feedback');
+            if (!playerToRemove) {
+                feedback.textContent = 'Please select a player to remove.';
+                feedback.style.color = 'red';
+                return;
+            }
+            delete players[playerToRemove];
+            updatePlayerSelect();
+            updateRemovePlayerSelect();
+            updateLeaderboard();
+            feedback.textContent = `Player "${playerToRemove}" removed!`;
+            feedback.style.color = 'green';
+        }
+
+        function changeLanguage() {
+            languageMode = document.getElementById('languageChangeSelect').value;
+            useEnglish = true; // Reset alternation for "Both" mode
+            document.getElementById('feedback').textContent = `Language changed to ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'Both'}.`;
+            document.getElementById('feedback').style.color = 'green';
+            document.getElementById('wordDisplay').textContent = 'Click "Generate New Word" to continue.';
         }
     </script>
 </body>
