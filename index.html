@@ -2,161 +2,241 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f172a" />
   <title>Song Association Game</title>
-  <meta name="theme-color" content="#111827">
-  <link rel="icon" href="data:,">
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #111827;
-      color: white;
       margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      color: #111827;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
+      align-items: center;
+      padding: 2rem;
     }
-
-    header, main {
-      padding: 1rem;
-      text-align: center;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.8rem;
-    }
-
-    #wordDisplay {
-      font-size: 2.5rem;
+    header {
+      font-size: 1.5rem;
       font-weight: bold;
-      margin: 2rem 0;
+      margin-bottom: 1rem;
     }
-
-    .controls button {
+    .hidden { display: none; }
+    #settings, #game-area { max-width: 400px; width: 100%; margin: 1rem 0; }
+    button {
       background: #2563eb;
-      border: none;
       color: white;
-      padding: 1rem 2rem;
-      margin: 0.5rem;
-      font-size: 1rem;
+      border: none;
+      padding: 0.75rem 1rem;
       border-radius: 0.5rem;
+      font-size: 1rem;
       cursor: pointer;
+      margin-top: 1rem;
+      width: 100%;
     }
-
-    .controls button:hover {
+    button:hover {
       background: #1d4ed8;
     }
-
-    footer {
-      margin-top: auto;
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.8rem;
-      color: #9ca3af;
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
     }
-
-    #scoreBoard {
+    #word-display {
+      font-size: 2rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 2rem 0;
+    }
+    #scoreboard {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .player-score {
+      display: flex;
+      justify-content: space-between;
+      background: #e5e7eb;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+    }
+    #settings-toggle {
+      font-size: 0.9rem;
+      background: transparent;
+      color: #2563eb;
+      text-decoration: underline;
       margin-top: 1rem;
-      font-size: 1.2rem;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>🎵 Song Association Game</h1>
-    <p>Sing a lyric using the given word!</p>
-  </header>
+  <header>🎵 Song Association Game</header>
 
-  <main>
-    <div id="wordDisplay">Loading...</div>
+  <div id="setup">
+    <label for="player-names">Enter player names (comma-separated):</label>
+    <input type="text" id="player-names" placeholder="e.g. Alice, Bob, Charlie" />
 
-    <div class="controls">
-      <button id="startBtn" disabled>Start</button>
-      <button onclick="nextWord()">Next Word</button>
-      <button onclick="addPoint()">+1 Point</button>
-      <button onclick="resetScore()">Reset Score</button>
+    <label for="language-select">Choose language:</label>
+    <select id="language-select">
+      <option value="both">Both (EN + MY)</option>
+      <option value="en">English</option>
+      <option value="my">Malay</option>
+    </select>
+
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="game-area" class="hidden">
+    <div id="word-display">Loading...</div>
+
+    <button onclick="nextWord()">Next Word</button>
+
+    <div id="scoreboard"></div>
+
+    <div id="settings">
+      <button onclick="toggleScoreboard()">Toggle Scoreboard</button>
+      <button onclick="promptAddPlayers()">Add Players</button>
+      <button onclick="refreshWordList()">Refresh Word List</button>
+      <button onclick="changeLanguage()">Change Language</button>
     </div>
 
-    <div id="scoreBoard">Score: 0</div>
-  </main>
-
-  <footer>
-    <p>Made with ❤️ by Zulhimi Amar</p>
-  </footer>
+    <button id="settings-toggle" onclick="resetGame()">Reset Game</button>
+  </div>
 
   <script>
-    let words = [];
-    let currentWordIndex = 0;
-    let score = 0;
+    const englishCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+    const malayCSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
 
-    async function fetchWords() {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
-      const res = await fetch(sheetURL);
-      const text = await res.text();
-      const allWords = text.split('\n');
-      const cleaned = allWords.filter(w => w.trim()).map(w => w.trim());
-      localStorage.setItem('songGame_words', JSON.stringify(cleaned));
-      return cleaned;
-    }
+    let words = [],
+        allWords = [],
+        currentWord = '',
+        players = [],
+        scores = {},
+        language = 'both';
 
-    async function init() {
-      const storedWords = localStorage.getItem('songGame_words');
-      if (storedWords) {
-        words = JSON.parse(storedWords);
-      } else {
-        words = await fetchWords();
+    const wordDisplay = document.getElementById('word-display');
+    const scoreboard = document.getElementById('scoreboard');
+
+    function loadWords() {
+      const promises = [];
+      if (language === 'en' || language === 'both') {
+        promises.push(fetch(englishCSV).then(res => res.text()));
       }
-
-      if (words.length > 0) {
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('wordDisplay').innerText = 'Press Start';
-      } else {
-        document.getElementById('wordDisplay').innerText = 'No words found!';
+      if (language === 'my' || language === 'both') {
+        promises.push(fetch(malayCSV).then(res => res.text()));
       }
+      Promise.all(promises).then(csvs => {
+        allWords = csvs.flatMap(csv => csv.split('\n').map(row => row.trim()).filter(Boolean));
+        words = [...allWords];
+        nextWord();
+      });
     }
 
     function startGame() {
-      if (!words || words.length === 0) {
-        document.getElementById('wordDisplay').innerText = 'Words not loaded!';
-        return;
-      }
+      const nameInput = document.getElementById('player-names').value.trim();
+      language = document.getElementById('language-select').value;
+      if (!nameInput) return alert('Please enter player names.');
+      players = nameInput.split(',').map(n => n.trim()).filter(Boolean);
+      if (players.length === 0) return alert('Please enter at least one valid player name.');
+      players.forEach(p => scores[p] = 0);
 
-      score = 0;
-      updateScore();
-      currentWordIndex = -1;
-      nextWord();
+      localStorage.setItem('songGamePlayers', JSON.stringify(players));
+      localStorage.setItem('songGameScores', JSON.stringify(scores));
+      localStorage.setItem('songGameLanguage', language);
+
+      document.getElementById('setup').classList.add('hidden');
+      document.getElementById('game-area').classList.remove('hidden');
+
+      loadWords();
+      updateScoreboard();
     }
 
     function nextWord() {
-      if (!words || words.length === 0) {
-        document.getElementById('wordDisplay').innerText = 'Words not loaded!';
-        return;
+      if (words.length === 0) words = [...allWords];
+      const index = Math.floor(Math.random() * words.length);
+      currentWord = words.splice(index, 1)[0];
+      wordDisplay.textContent = currentWord;
+    }
+
+    function updateScoreboard() {
+      scoreboard.innerHTML = '';
+      players.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'player-score';
+        div.innerHTML = `
+          <span>${p}</span>
+          <span>
+            <button onclick="changeScore('${p}', -1)">-</button>
+            ${scores[p]}
+            <button onclick="changeScore('${p}', 1)">+</button>
+          </span>
+        `;
+        scoreboard.appendChild(div);
+      });
+    }
+
+    function changeScore(player, delta) {
+      scores[player] += delta;
+      localStorage.setItem('songGameScores', JSON.stringify(scores));
+      updateScoreboard();
+    }
+
+    function toggleScoreboard() {
+      scoreboard.classList.toggle('hidden');
+    }
+
+    function promptAddPlayers() {
+      const newNames = prompt('Add more players (comma-separated):');
+      if (!newNames) return;
+      newNames.split(',').map(n => n.trim()).filter(Boolean).forEach(p => {
+        if (!scores[p]) {
+          players.push(p);
+          scores[p] = 0;
+        }
+      });
+      localStorage.setItem('songGamePlayers', JSON.stringify(players));
+      localStorage.setItem('songGameScores', JSON.stringify(scores));
+      updateScoreboard();
+    }
+
+    function refreshWordList() {
+      words = [...allWords];
+      nextWord();
+    }
+
+    function changeLanguage() {
+      const lang = prompt('Enter language: en / my / both');
+      if (!['en', 'my', 'both'].includes(lang)) return alert('Invalid input.');
+      language = lang;
+      localStorage.setItem('songGameLanguage', language);
+      loadWords();
+    }
+
+    function resetGame() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    // Restore previous state
+    window.onload = () => {
+      const savedPlayers = JSON.parse(localStorage.getItem('songGamePlayers') || '[]');
+      const savedScores = JSON.parse(localStorage.getItem('songGameScores') || '{}');
+      const savedLanguage = localStorage.getItem('songGameLanguage') || 'both';
+      if (savedPlayers.length > 0) {
+        players = savedPlayers;
+        scores = savedScores;
+        language = savedLanguage;
+        document.getElementById('setup').classList.add('hidden');
+        document.getElementById('game-area').classList.remove('hidden');
+        loadWords();
+        updateScoreboard();
       }
-
-      currentWordIndex = (currentWordIndex + 1) % words.length;
-      document.getElementById('wordDisplay').innerText = words[currentWordIndex];
     }
-
-    function addPoint() {
-      score++;
-      updateScore();
-    }
-
-    function resetScore() {
-      score = 0;
-      updateScore();
-    }
-
-    function updateScore() {
-      document.getElementById('scoreBoard').innerText = `Score: ${score}`;
-    }
-
-    // Bind start button once DOM is loaded
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('startBtn').onclick = startGame;
-      init();
-    });
   </script>
 </body>
 </html>
