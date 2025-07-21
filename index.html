@@ -2,282 +2,240 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Song Association Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Fredoka', sans-serif;
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      background-color: #fef9f4;
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    body {
+      background: #f4f7fa;
+      color: #333;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
     }
 
-    .tab-content {
+    header {
+      padding: 1rem;
+      text-align: center;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    main {
       flex: 1;
-      display: none;
-      padding: 20px;
+      padding: 1rem;
     }
 
-    .active-tab {
-      display: block;
-    }
-
-    .tab-bar {
+    .tabs {
       display: flex;
       justify-content: space-around;
-      border-top: 1px solid #ccc;
-      background-color: #fff;
       position: fixed;
       bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
+      width: 100%;
+      background: #fff;
+      box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
     }
 
-    .tab-button {
+    .tab-btn {
       flex: 1;
+      padding: 1rem;
+      text-align: center;
+      font-size: 1.1rem;
       border: none;
       background: none;
-      font-size: 18px;
-      padding: 10px;
-      cursor: pointer;
-    }
-
-    .container {
-      max-width: 500px;
-      margin: auto;
-      background: #fff;
-      border-radius: 15px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
-    }
-
-    button, select, input {
-      width: 100%;
-      margin: 10px 0;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-    }
-
-    button {
-      background-color: #ff6b6b;
-      color: white;
-      font-weight: bold;
-    }
-
-    button:hover {
-      background-color: #e85b5b;
-    }
-
-    #wordDisplay {
-      font-size: 28px;
-      text-align: center;
-      margin: 20px 0;
-    }
-
-    #feedback {
-      text-align: center;
-      font-size: 14px;
       color: #555;
     }
 
-    #leaderboard ul {
-      padding-left: 0;
-      list-style: none;
+    .tab-btn.active {
+      color: #2196f3;
+      font-weight: bold;
     }
 
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 22px;
-      }
+    .tab-page {
+      display: none;
+    }
 
-      #wordDisplay {
-        font-size: 22px;
-      }
+    .tab-page.active {
+      display: block;
+    }
 
-      .tab-button {
-        font-size: 16px;
-      }
+    .word-display {
+      font-size: 2rem;
+      text-align: center;
+      margin: 2rem 0;
+    }
+
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 0.5rem auto;
+      display: block;
+    }
+
+    .player-list {
+      margin-top: 1rem;
+    }
+
+    .modal {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    input, select {
+      padding: 0.5rem;
+      width: 100%;
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
   </style>
 </head>
 <body>
+  <header>🎤 Song Game</header>
 
-  <!-- GAME TAB -->
-  <div id="gameTab" class="tab-content active-tab">
-    <div class="container">
-      <h1>🎵 Song Game</h1>
-      <div id="wordDisplay">Tap “🎲 New Word” to start!</div>
-      <select id="playerSelect">
-        <option value="">🎤 Who sang it?</option>
+  <main>
+    <section id="game" class="tab-page active">
+      <div class="word-display" id="wordDisplay">Loading...</div>
+      <button class="btn" onclick="nextWord()">Next Word</button>
+    </section>
+
+    <section id="settings" class="tab-page">
+      <button class="btn" onclick="resetGame()">Reset Game</button>
+      <div class="player-list" id="playerList"></div>
+    </section>
+  </main>
+
+  <nav class="tabs">
+    <button class="tab-btn active" onclick="showTab('game')">🎮 Game</button>
+    <button class="tab-btn" onclick="showTab('settings')">⚙️ Settings</button>
+  </nav>
+
+  <div class="modal" id="setupModal">
+    <div class="modal-content">
+      <h2>Setup Game</h2>
+      <input type="text" id="playerInput" placeholder="Enter player name" />
+      <button class="btn" onclick="addPlayer()">Add Player</button>
+      <select id="languageSelect">
+        <option value="en">English</option>
+        <option value="ms">Malay</option>
       </select>
-      <button onclick="checkSong()">✅ I Sang It!</button>
-      <button onclick="generateWord()">🎲 New Word</button>
-      <button onclick="skipWord()">⏭️ Skip</button>
-      <select id="languageChangeSelect" onchange="changeLanguage()">
-        <option value="en">🇬🇧 English</option>
-        <option value="ms">🇲🇾 Malay</option>
-        <option value="both">🌐 Both</option>
-      </select>
-      <div id="feedback"></div>
+      <button class="btn" onclick="startGame()">Start Game</button>
     </div>
-  </div>
-
-  <!-- SETTINGS TAB -->
-  <div id="settingsTab" class="tab-content">
-    <div class="container">
-      <h1>⚙️ Settings</h1>
-      <input type="text" id="addPlayerInput" placeholder="➕ Add player (e.g., Ali)">
-      <button onclick="addPlayer()">Add Player</button>
-      <select id="removePlayerSelect">
-        <option value="">🗑️ Remove Player</option>
-      </select>
-      <button onclick="removePlayer()">Remove Player</button>
-      <button onclick="refreshWordList()">🔄 Refresh Word List</button>
-
-      <h2>🏆 Leaderboard</h2>
-      <ul id="leaderboardList"></ul>
-    </div>
-  </div>
-
-  <!-- TAB BAR -->
-  <div class="tab-bar">
-    <button class="tab-button" onclick="showTab('gameTab')">🎮 Game</button>
-    <button class="tab-button" onclick="showTab('settingsTab')">⚙️ Settings</button>
   </div>
 
   <script>
-    let players = {};
-    let currentWord = '';
-    let languageMode = 'en';
-    let useEnglish = true;
+    let players = JSON.parse(localStorage.getItem('songGame_players')) || [];
+    let language = localStorage.getItem('songGame_lang') || null;
+    let wordIndex = parseInt(localStorage.getItem('songGame_index')) || 0;
+    let words = [];
 
-    const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
-    let wordLists = { english: [], malay: [] };
+    const setupModal = document.getElementById('setupModal');
+    const wordDisplay = document.getElementById('wordDisplay');
+    const playerList = document.getElementById('playerList');
 
-    async function fetchWords() {
-      try {
-        const res = await fetch(sheetUrl);
-        const csvText = await res.text();
-        const rows = csvText.split('\n').map(r => r.split(',').map(c => c.trim()));
-        wordLists.malay = rows.slice(1).map(row => row[0]).filter(Boolean);
-        wordLists.english = rows.slice(1).map(row => row[1]).filter(Boolean);
-      } catch (e) {
-        alert("⚠️ Error loading word list");
-      }
-    }
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
 
-    function generateWord() {
-      let lang = languageMode;
-      if (lang === 'both') {
-        lang = useEnglish ? 'en' : 'ms';
-        useEnglish = !useEnglish;
-      }
-      const wordPool = lang === 'en' ? wordLists.english : wordLists.malay;
-      if (wordPool.length === 0) {
-        document.getElementById('wordDisplay').textContent = '⚠️ No words available!';
-        return;
-      }
-      currentWord = wordPool[Math.floor(Math.random() * wordPool.length)];
-      document.getElementById('wordDisplay').textContent = `🎯 ${currentWord} (${lang === 'en' ? 'EN' : 'MS'})`;
-      document.getElementById('playerSelect').value = '';
-      document.getElementById('feedback').textContent = '';
-    }
-
-    function checkSong() {
-      const player = document.getElementById('playerSelect').value;
-      if (!player) {
-        document.getElementById('feedback').textContent = '❗ Please select a player.';
-        return;
-      }
-      players[player]++;
-      updateLeaderboard();
-      document.getElementById('feedback').textContent = `🎉 Great job, ${player}! +1 point`;
-      document.getElementById('playerSelect').value = '';
-    }
-
-    function skipWord() {
-      generateWord();
-      document.getElementById('feedback').textContent = '➡️ Skipped! New word.';
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.tab-btn[onclick="showTab('${tabId}')"]`).classList.add('active');
     }
 
     function addPlayer() {
-      const name = document.getElementById('addPlayerInput').value.trim();
-      if (!name) return;
-      if (players[name]) {
-        alert("Player already exists!");
-        return;
-      }
-      players[name] = 0;
-      document.getElementById('addPlayerInput').value = '';
-      updatePlayerDropdowns();
-      updateLeaderboard();
-    }
-
-    function removePlayer() {
-      const name = document.getElementById('removePlayerSelect').value;
-      if (!name) return;
-      delete players[name];
-      updatePlayerDropdowns();
-      updateLeaderboard();
-    }
-
-    function updatePlayerDropdowns() {
-      const playerSelect = document.getElementById('playerSelect');
-      const removeSelect = document.getElementById('removePlayerSelect');
-      playerSelect.innerHTML = `<option value="">🎤 Who sang it?</option>`;
-      removeSelect.innerHTML = `<option value="">🗑️ Remove Player</option>`;
-      for (const name in players) {
-        const opt1 = new Option(name, name);
-        const opt2 = new Option(name, name);
-        playerSelect.appendChild(opt1);
-        removeSelect.appendChild(opt2);
+      const input = document.getElementById('playerInput');
+      const name = input.value.trim();
+      if (name) {
+        players.push({ name, score: 0 });
+        input.value = '';
+        updatePlayerList();
       }
     }
 
-    function updateLeaderboard() {
-      const list = document.getElementById('leaderboardList');
-      list.innerHTML = '';
-      Object.entries(players).sort((a,b) => b[1] - a[1]).forEach(([name, score]) => {
-        const li = document.createElement('li');
-        li.textContent = `${name}: ${score} pts`;
-        list.appendChild(li);
-      });
+    function updatePlayerList() {
+      playerList.innerHTML = '<h3>Players</h3>' + players.map(p => `<p>${p.name}: ${p.score}</p>`).join('');
     }
 
-    function changeLanguage() {
-      languageMode = document.getElementById('languageChangeSelect').value;
-      useEnglish = true;
-      document.getElementById('feedback').textContent = `🌐 Language changed to ${languageMode}`;
+    async function fetchWords() {
+      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTZ2EwA9Ix1w9nU1yo3kBykUApVnP8HRsDb94hHkLRfRW5fMfAHzH3OWbWxThSyK3EVXMG05MtYmRp7/pub?output=csv';
+      const res = await fetch(sheetURL);
+      const text = await res.text();
+      const allWords = text.split('\n');
+      words = allWords.filter(w => w.trim()).map(w => w.trim());
+      localStorage.setItem('songGame_words', JSON.stringify(words));
     }
 
-    function refreshWordList() {
-      fetchWords().then(() => {
-        alert("✅ Word list refreshed!");
-      });
+    function nextWord() {
+      if (wordIndex < words.length) {
+        wordDisplay.textContent = words[wordIndex];
+        wordIndex++;
+        localStorage.setItem('songGame_index', wordIndex);
+      } else {
+        wordDisplay.textContent = '🎉 All words used! Refresh list.';
+      }
     }
 
-    function showTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active-tab'));
-      document.getElementById(tabId).classList.add('active-tab');
+    function startGame() {
+      language = document.getElementById('languageSelect').value;
+      localStorage.setItem('songGame_players', JSON.stringify(players));
+      localStorage.setItem('songGame_lang', language);
+      localStorage.setItem('songGame_index', 0);
+      setupModal.style.display = 'none';
+      nextWord();
     }
 
-    window.onload = async () => {
-      await fetchWords();
-    };
+    function resetGame() {
+      if (confirm('Are you sure you want to reset the game?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    async function init() {
+      updatePlayerList();
+
+      const storedWords = localStorage.getItem('songGame_words');
+      words = storedWords ? JSON.parse(storedWords) : await fetchWords();
+
+      if (!language || players.length === 0) {
+        setupModal.style.display = 'flex';
+      } else {
+        wordDisplay.textContent = words[wordIndex] || 'Start playing!';
+      }
+    }
+
+    init();
   </script>
 </body>
 </html>
