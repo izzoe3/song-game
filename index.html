@@ -76,12 +76,25 @@
         button:hover, button:active {
             background-color: #e65b5b;
         }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        button.score-btn {
+            width: 48px;
+            display: inline-block;
+            margin: 5px;
+            font-size: 14px;
+        }
         #wordDisplay {
-            font-size: 28px;
+            font-size: 36px;
             font-weight: 600;
             color: #2d3748;
-            margin: 20px 0;
+            margin: 30px 0;
             text-align: center;
+            padding: 20px;
+            background-color: #f8fafc;
+            border-radius: 10px;
         }
         #feedback {
             margin-top: 10px;
@@ -113,6 +126,9 @@
             font-size: 16px;
             margin: 8px 0;
             color: #4a5568;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         .modal {
             display: none;
@@ -145,7 +161,8 @@
                 font-size: 20px;
             }
             #wordDisplay {
-                font-size: 24px;
+                font-size: 32px;
+                padding: 15px;
             }
             select, button, input {
                 font-size: 14px;
@@ -153,6 +170,10 @@
             }
             .tab-button {
                 font-size: 16px;
+            }
+            button.score-btn {
+                width: 40px;
+                font-size: 12px;
             }
         }
     </style>
@@ -178,12 +199,11 @@
         </div>
         <div id="gameTab" class="tab-content">
             <h1>Song Association Game</h1>
-            <div id="wordDisplay">Click "Generate New Word" to start!</div>
-            <select id="playerSelect">
+            <div id="wordDisplay"></div>
+            <select id="playerSelect" onchange="enableGenerateButton()">
                 <option value="">Select Player</option>
             </select>
-            <button onclick="checkSong()">Submit (I Sang a Song!)</button>
-            <button onclick="generateWord()">Generate New Word</button>
+            <button id="generateWordBtn" onclick="generateWord()" disabled>Generate New Word</button>
             <button onclick="skipWord()">Skip Word</button>
             <select id="languageChangeSelect" onchange="changeLanguage()">
                 <option value="en">English</option>
@@ -228,6 +248,7 @@
             document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
             document.getElementById('feedback').textContent = '';
             document.getElementById('feedbackSettings').textContent = '';
+            enableGenerateButton();
         }
 
         async function fetchWords() {
@@ -266,7 +287,12 @@
                 return;
             }
             const wordsLoaded = await fetchWords();
-            if (!wordsLoaded) return;
+            if (!wordsLoaded) {
+                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+                document.getElementById('feedback').textContent = 'No words available. Add words to the Google Sheet and click "Refresh Word List" in Settings.';
+                document.getElementById('feedback').className = 'red';
+                return;
+            }
             playerNames.forEach(name => {
                 players[name] = 0;
             });
@@ -276,6 +302,15 @@
             document.getElementById('languageChangeSelect').value = languageMode;
             document.getElementById('playerModal').style.display = 'none';
             document.getElementById('gameTab').style.display = 'block';
+            // Generate initial word after confirming word lists are populated
+            const availableWords = languageMode === 'en' ? wordLists.english : languageMode === 'ms' ? wordLists.malay : [...wordLists.english, ...wordLists.malay];
+            if (availableWords.length > 0) {
+                generateWord();
+            } else {
+                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+                document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
+                document.getElementById('feedback').className = 'red';
+            }
         }
 
         async function refreshWordList() {
@@ -286,11 +321,13 @@
             if (success) {
                 feedback.textContent = 'Word list refreshed! Return to Game tab to continue.';
                 feedback.className = 'green';
+                generateWord(); // Generate new word after refresh
             }
         }
 
         function updatePlayerSelect() {
             const playerSelect = document.getElementById('playerSelect');
+            const previousValue = playerSelect.value;
             playerSelect.innerHTML = '<option value="">Select Player</option>';
             Object.keys(players).forEach(name => {
                 const option = document.createElement('option');
@@ -298,6 +335,8 @@
                 option.textContent = name;
                 playerSelect.appendChild(option);
             });
+            playerSelect.value = previousValue && players[previousValue] ? previousValue : '';
+            enableGenerateButton();
         }
 
         function updateRemovePlayerSelect() {
@@ -316,9 +355,30 @@
             leaderboardList.innerHTML = '';
             Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
                 const li = document.createElement('li');
-                li.textContent = `${name}: ${score} points`;
+                li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')">+</button><button class="score-btn" onclick="decrementScore('${name}')">–</button>`;
                 leaderboardList.appendChild(li);
             });
+        }
+
+        function incrementScore(player) {
+            players[player] += 1;
+            updateLeaderboard();
+            updatePlayerSelect();
+            document.getElementById('feedbackSettings').textContent = `Added 1 point to ${player}.`;
+            document.getElementById('feedbackSettings').className = 'green';
+        }
+
+        function decrementScore(player) {
+            if (players[player] > 0) {
+                players[player] -= 1;
+                updateLeaderboard();
+                updatePlayerSelect();
+                document.getElementById('feedbackSettings').textContent = `Removed 1 point from ${player}.`;
+                document.getElementById('feedbackSettings').className = 'green';
+            } else {
+                document.getElementById('feedbackSettings').textContent = `${player} already has 0 points.`;
+                document.getElementById('feedbackSettings').className = 'red';
+            }
         }
 
         function toggleLeaderboard() {
@@ -333,7 +393,28 @@
             }
         }
 
+        function enableGenerateButton() {
+            const player = document.getElementById('playerSelect').value;
+            const generateBtn = document.getElementById('generateWordBtn');
+            generateBtn.disabled = !player;
+        }
+
         function generateWord() {
+            const player = document.getElementById('playerSelect').value;
+            const feedback = document.getElementById('feedback');
+            const generateBtn = document.getElementById('generateWordBtn');
+
+            if (!player) {
+                feedback.textContent = 'Please select a player to generate a new word.';
+                feedback.className = 'red';
+                generateBtn.disabled = true;
+                return;
+            }
+
+            players[player] += 1;
+            feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
+            feedback.className = 'green';
+
             let lang = languageMode;
             if (languageMode === 'both') {
                 lang = useEnglish ? 'en' : 'ms';
@@ -341,39 +422,39 @@
             }
             const wordList = lang === 'en' ? wordLists.english : wordLists.malay;
             if (wordList.length === 0) {
-                document.getElementById('wordDisplay').textContent = `Error: No ${lang === 'en' ? 'English' : 'Malay'} words available.`;
-                document.getElementById('feedback').textContent = 'Add words to the Google Sheet and click "Refresh Word List" in Settings.';
+                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+                document.getElementById('feedback').textContent = `No ${lang === 'en' ? 'English' : 'Malay'} words available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
                 document.getElementById('feedback').className = 'red';
+                generateBtn.disabled = true;
                 return;
             }
             currentWord = wordList[Math.floor(Math.random() * wordList.length)];
-            document.getElementById('wordDisplay').textContent = `Word: ${currentWord} (${lang === 'en' ? 'English' : 'Malay'})`;
+            document.getElementById('wordDisplay').textContent = currentWord;
             document.getElementById('playerSelect').value = '';
-            document.getElementById('feedback').textContent = '';
-            document.getElementById('feedback').className = '';
+            generateBtn.disabled = true;
+            updateLeaderboard();
         }
 
         function skipWord() {
-            generateWord();
-            document.getElementById('feedback').textContent = 'Word skipped! New word generated.';
-            document.getElementById('feedback').className = 'green';
-        }
-
-        function checkSong() {
-            const player = document.getElementById('playerSelect').value;
-            const feedback = document.getElementById('feedback');
-
-            if (!player) {
-                feedback.textContent = 'Please select a player.';
-                feedback.className = 'red';
+            let wordList;
+            if (languageMode === 'both') {
+                wordList = Math.random() < 0.5 ? wordLists.english : wordLists.malay;
+            } else {
+                wordList = languageMode === 'en' ? wordLists.english : wordLists.malay;
+            }
+            if (wordList.length === 0) {
+                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+                document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
+                document.getElementById('feedback').className = 'red';
+                document.getElementById('generateWordBtn').disabled = true;
                 return;
             }
-
-            players[player] += 1;
-            feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
-            feedback.className = 'green';
-            updateLeaderboard();
+            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+            document.getElementById('wordDisplay').textContent = currentWord;
             document.getElementById('playerSelect').value = '';
+            document.getElementById('generateWordBtn').disabled = true;
+            document.getElementById('feedback').textContent = 'Word skipped! New word generated.';
+            document.getElementById('feedback').className = 'green';
         }
 
         function addPlayer() {
@@ -419,7 +500,7 @@
             useEnglish = true; // Reset alternation for "Both" mode
             document.getElementById('feedback').textContent = `Language changed to ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'Both'}.`;
             document.getElementById('feedback').className = 'green';
-            document.getElementById('wordDisplay').textContent = 'Click "Generate New Word" to continue.';
+            generateWord(); // Generate new word on language change
         }
     </script>
 </body>
