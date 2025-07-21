@@ -1,211 +1,238 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0f172a" />
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="favicon.ico" />
+  <meta name="theme-color" content="#4f46e5" />
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="favicon.ico">
   <title>Song Association Game</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      background-color: #f8fafc;
-      color: #0f172a;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9fafb;
+      color: #111827;
     }
-    header, nav, main {
-      padding: 1rem;
-    }
+
     header {
-      background-color: #0f172a;
+      background-color: #4f46e5;
       color: white;
-      text-align: center;
-    }
-    nav {
-      display: flex;
-      justify-content: space-around;
-      background-color: #e2e8f0;
-    }
-    nav button {
-      flex: 1;
       padding: 1rem;
-      background: none;
-      border: none;
-      font-size: 1rem;
+      text-align: center;
+      font-size: 1.5rem;
     }
+
+    .tabs {
+      display: flex;
+      justify-content: center;
+      background-color: #e0e7ff;
+    }
+
+    .tab {
+      padding: 1rem;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+      font-weight: bold;
+      background: #e0e7ff;
+      border: none;
+      outline: none;
+    }
+
+    .tab.active {
+      background: #4f46e5;
+      color: white;
+    }
+
     .tab-content {
       display: none;
+      padding: 1.5rem;
     }
+
     .tab-content.active {
       display: block;
     }
-    .centered {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
+
     button {
-      padding: 0.75rem 1.25rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 0.5rem;
-      background-color: #0f172a;
+      background-color: #4f46e5;
       color: white;
-      cursor: pointer;
-    }
-    input, select {
-      padding: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
       font-size: 1rem;
-      width: 100%;
-    }
-    .scoreboard {
+      cursor: pointer;
       margin-top: 1rem;
     }
-    .hidden {
-      display: none;
+
+    button:hover {
+      background-color: #3730a3;
+    }
+
+    input, select {
+      padding: 0.75rem;
+      width: 100%;
+      margin-top: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    .word-display {
+      font-size: 2rem;
+      margin: 2rem 0;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .score-list {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    .score-list li {
+      margin: 0.5rem 0;
+      background: #e5e7eb;
+      padding: 0.5rem;
+      border-radius: 6px;
     }
   </style>
 </head>
+
 <body>
-  <header>
-    <h1>Song Association Game</h1>
-  </header>
-  <nav>
-    <button onclick="switchTab('game')">Game</button>
-    <button onclick="switchTab('settings')">Settings</button>
-  </nav>
-  <main>
-    <section id="game" class="tab-content active">
-      <div class="centered">
-        <div id="startScreen">
-          <input id="playerNames" placeholder="Enter player names (comma separated)" />
-          <select id="languageSelect">
-            <option value="english">English</option>
-            <option value="malay">Malay</option>
-            <option value="both">Both</option>
-          </select>
-          <button onclick="startGame()">Start Game</button>
-        </div>
-        <div id="gameScreen" class="hidden">
-          <h2 id="currentWord">...</h2>
-          <p>Current Player: <span id="currentPlayer"></span></p>
-          <button onclick="nextWord()">Next Word</button>
-        </div>
-      </div>
-    </section>
-    <section id="settings" class="tab-content">
-      <div class="centered">
-        <button onclick="resetGame()">Restart Game</button>
-        <button onclick="refreshWords()">Refresh Word List</button>
-        <select id="settingsLanguage" onchange="changeLanguage(this.value)">
-          <option value="english">English</option>
-          <option value="malay">Malay</option>
-          <option value="both">Both</option>
-        </select>
-        <button onclick="toggleScoreboard()">Toggle Leaderboard</button>
-        <div id="scoreboard" class="scoreboard hidden"></div>
-      </div>
-    </section>
-  </main>
+  <header>🎵 Song Association Game 🎵</header>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('game')">Game</button>
+    <button class="tab" onclick="showTab('settings')">Settings</button>
+  </div>
+
+  <div id="game" class="tab-content active">
+    <div class="word-display" id="wordDisplay">Press Start!</div>
+    <button onclick="nextWord()">Next Word</button>
+  </div>
+
+  <div id="settings" class="tab-content">
+    <label>Players (comma-separated):</label>
+    <input type="text" id="playersInput" placeholder="e.g. Alice, Bob" />
+
+    <label>Language:</label>
+    <select id="languageSelect">
+      <option value="english">English</option>
+      <option value="malay">Malay</option>
+      <option value="both">Both</option>
+    </select>
+
+    <button onclick="saveSettings()">Save Settings</button>
+    <button onclick="refreshWordList()">Refresh Word List</button>
+    <button onclick="resetScores()">Reset Scores</button>
+
+    <h3>Scoreboard</h3>
+    <ul id="scoreboard" class="score-list"></ul>
+  </div>
+
   <script>
-    let englishWords = [];
-    let malayWords = [];
-    let combinedWords = [];
+    let wordList = { english: [], malay: [] };
+    let languageMode = 'english';
     let players = [];
     let scores = {};
-    let currentIndex = 0;
     let currentPlayerIndex = 0;
     let currentLang = 'english';
 
-    async function fetchWords() {
-      const sheetURL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
-      const res = await fetch(sheetURL);
-      const data = await res.text();
-      const rows = data.split('\n');
-      englishWords = [];
-      malayWords = [];
-      for (let i = 1; i < rows.length; i++) {
-        const cols = rows[i].split(',');
-        if (cols[0]) englishWords.push(cols[0].trim());
-        if (cols[1]) malayWords.push(cols[1].trim());
-      }
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFromLocalStorage();
+      fetchWords();
+    });
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
     }
 
-    function startGame() {
-      const nameInput = document.getElementById('playerNames').value;
-      players = nameInput.split(',').map(n => n.trim()).filter(n => n);
-      scores = Object.fromEntries(players.map(p => [p, 0]));
-      currentLang = document.getElementById('languageSelect').value;
-      localStorage.setItem('language', currentLang);
-      combinedWords = currentLang === 'english' ? [...englishWords] : currentLang === 'malay' ? [...malayWords] : [...englishWords, ...malayWords];
-      shuffle(combinedWords);
-      currentIndex = 0;
-      currentPlayerIndex = 0;
-      document.getElementById('startScreen').classList.add('hidden');
-      document.getElementById('gameScreen').classList.remove('hidden');
-      nextWord();
+    function fetchWords() {
+      const url = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+      fetch(url)
+        .then(res => res.text())
+        .then(csv => {
+          const rows = csv.trim().split('\n').map(r => r.split(','));
+          rows.forEach(([en, ms]) => {
+            if (en) wordList.english.push(en.trim());
+            if (ms) wordList.malay.push(ms.trim());
+          });
+        });
     }
 
     function nextWord() {
-      if (combinedWords.length === 0) return;
-      if (currentIndex >= combinedWords.length) currentIndex = 0;
-      const word = combinedWords[currentIndex++];
-      document.getElementById('currentWord').textContent = word;
-      document.getElementById('currentPlayer').textContent = players[currentPlayerIndex];
+      if (!players.length) {
+        alert('Please add players in settings.');
+        return;
+      }
+      if (languageMode === 'both') {
+        currentLang = currentLang === 'english' ? 'malay' : 'english';
+      } else {
+        currentLang = languageMode;
+      }
+      const list = wordList[currentLang];
+      const word = list[Math.floor(Math.random() * list.length)];
+      document.getElementById('wordDisplay').textContent = `${players[currentPlayerIndex]}: ${word}`;
       currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
     }
 
-    function resetGame() {
-      localStorage.clear();
-      location.reload();
+    function saveSettings() {
+      players = document.getElementById('playersInput').value.split(',').map(p => p.trim()).filter(p => p);
+      languageMode = document.getElementById('languageSelect').value;
+      currentPlayerIndex = 0;
+      if (!players.length) return alert('Please enter at least one player.');
+      if (!scores) scores = {};
+      players.forEach(p => scores[p] = scores[p] || 0);
+      updateScoreboard();
+      saveToLocalStorage();
     }
 
-    function changeLanguage(lang) {
-      currentLang = lang;
-      document.getElementById('languageSelect').value = lang;
+    function refreshWordList() {
+      wordList = { english: [], malay: [] };
+      fetchWords();
     }
 
-    function toggleScoreboard() {
-      const el = document.getElementById('scoreboard');
-      if (el.classList.contains('hidden')) {
-        el.innerHTML = players.map(p => `<p>${p}: ${scores[p] || 0}</p>`).join('');
-        el.classList.remove('hidden');
-      } else {
-        el.classList.add('hidden');
-      }
+    function resetScores() {
+      scores = {};
+      players.forEach(p => scores[p] = 0);
+      updateScoreboard();
+      saveToLocalStorage();
     }
 
-    function shuffle(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
+    function updateScoreboard() {
+      const ul = document.getElementById('scoreboard');
+      ul.innerHTML = '';
+      players.forEach(p => {
+        const li = document.createElement('li');
+        li.textContent = `${p}: ${scores[p]}`;
+        ul.appendChild(li);
+      });
     }
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-      document.getElementById(tabId).classList.add('active');
+    function saveToLocalStorage() {
+      localStorage.setItem('sag_players', JSON.stringify(players));
+      localStorage.setItem('sag_scores', JSON.stringify(scores));
+      localStorage.setItem('sag_language', languageMode);
     }
 
-    async function refreshWords() {
-      await fetchWords();
-      alert('Word list updated!');
+    function loadFromLocalStorage() {
+      players = JSON.parse(localStorage.getItem('sag_players') || '[]');
+      scores = JSON.parse(localStorage.getItem('sag_scores') || '{}');
+      languageMode = localStorage.getItem('sag_language') || 'english';
+      document.getElementById('playersInput').value = players.join(', ');
+      document.getElementById('languageSelect').value = languageMode;
+      updateScoreboard();
     }
-
-    window.addEventListener('load', async () => {
-      await fetchWords();
-      const savedLang = localStorage.getItem('language');
-      if (savedLang) {
-        document.getElementById('languageSelect').value = savedLang;
-        document.getElementById('settingsLanguage').value = savedLang;
-      }
-    });
   </script>
 </body>
+
 </html>
