@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Association Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        select, button, input {
+            margin: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: calc(100% - 22px);
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #wordDisplay {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        #feedback {
+            margin-top: 10px;
+            color: #555;
+        }
+        #leaderboard {
+            margin-top: 20px;
+            text-align: left;
+        }
+        #leaderboard h2 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        #leaderboard ul {
+            list-style: none;
+            padding: 0;
+        }
+        #leaderboard li {
+            font-size: 16px;
+            margin: 5px 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        .modal-content input, .modal-content select {
+            margin: 10px 0;
+            width: calc(100% - 22px);
+        }
+    </style>
+</head>
+<body>
+    <div id="playerModal" class="modal">
+        <div class="modal-content">
+            <h2>Setup Game</h2>
+            <input type="text" id="playerInput" placeholder="Enter player names (e.g., Ali, Siti)">
+            <select id="languageSelect">
+                <option value="en">English</option>
+                <option value="ms">Malay</option>
+                <option value="both">Both</option>
+            </select>
+            <p>Words are loaded from a Google Sheet. Add new words there and click "Refresh Word List" during play.</p>
+            <button onclick="startGame()">Start Game</button>
+        </div>
+    </div>
+    <div class="container" id="gameContainer" style="display: none;">
+        <h1>Song Association Game</h1>
+        <div id="wordDisplay">Click "Generate New Word" to start!</div>
+        <select id="playerSelect"></select>
+        <input type="text" id="songInput" placeholder="Enter the song title you sang">
+        <button onclick="checkSong()">Submit Song</button>
+        <button onclick="generateWord()">Generate New Word</button>
+        <button onclick="refreshWordList()">Refresh Word List</button>
+        <div id="feedback"></div>
+        <div id="leaderboard">
+            <h2>Leaderboard</h2>
+            <ul id="leaderboardList"></ul>
+        </div>
+    </div>
+
+    <script>
+        let players = {};
+        let currentWord = '';
+        let languageMode = 'en';
+        let useEnglish = true;
+        // Replace with your Google Sheet's published CSV URL
+        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+        let wordLists = { english: [], malay: [] };
+
+        // Show setup modal on page load
+        document.getElementById('playerModal').style.display = 'flex';
+
+        async function fetchWords() {
+            const feedback = document.getElementById('feedback');
+            try {
+                const response = await fetch(sheetUrl);
+                if (!response.ok) throw new Error('Failed to fetch Google Sheet');
+                const csvText = await response.text();
+                const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
+                // Skip header row and filter valid words
+                wordLists.malay = rows.slice(1).map(row => row[0]).filter(word => word && word !== '');
+                wordLists.english = rows.slice(1).map(row => row[1]).filter(word => word && word !== '');
+                if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
+                    throw new Error('No valid words found in the Google Sheet');
+                }
+                feedback.textContent = 'Word list loaded successfully!';
+                feedback.style.color = 'green';
+                return true;
+            } catch (error) {
+                console.error('Error:', error);
+                feedback.textContent = 'Error: Could not load Google Sheet. Ensure the URL is correct and public.';
+                feedback.style.color = 'red';
+                return false;
+            }
+        }
+
+        async function startGame() {
+            const playerInput = document.getElementById('playerInput').value.trim();
+            languageMode = document.getElementById('languageSelect').value;
+            if (!playerInput) {
+                alert('Please enter at least one player name.');
+                return;
+            }
+            const playerNames = playerInput.split(',').map(name => name.trim()).filter(name => name);
+            if (playerNames.length === 0) {
+                alert('Please enter valid player names.');
+                return;
+            }
+            const wordsLoaded = await fetchWords();
+            if (!wordsLoaded) return;
+            playerNames.forEach(name => {
+                players[name] = 0;
+            });
+            updatePlayerSelect();
+            updateLeaderboard();
+            document.getElementById('playerModal').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'block';
+        }
+
+        async function refreshWordList() {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = 'Refreshing word list...';
+            feedback.style.color = '#555';
+            const success = await fetchWords();
+            if (success) {
+                document.getElementById('wordDisplay').textContent = 'Word list refreshed! Click "Generate New Word" to continue.';
+            }
+        }
+
+        function updatePlayerSelect() {
+            const playerSelect = document.getElementById('playerSelect');
+            playerSelect.innerHTML = '';
+            Object.keys(players).forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                playerSelect.appendChild(option);
+            });
+        }
+
+        function updateLeaderboard() {
+            const leaderboardList = document.getElementById('leaderboardList');
+            leaderboardList.innerHTML = '';
+            Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
+                const li = document.createElement('li');
+                li.textContent = `${name}: ${score} points`;
+                leaderboardList.appendChild(li);
+            });
+        }
+
+        function generateWord() {
+            let lang = languageMode;
+            if (languageMode === 'both') {
+                lang = useEnglish ? 'en' : 'ms';
+                useEnglish = !useEnglish;
+            }
+            const wordList = lang === 'en' ? wordLists.english : wordLists.malay;
+            if (wordList.length === 0) {
+                document.getElementById('wordDisplay').textContent = `Error: No ${lang === 'en' ? 'English' : 'Malay'} words available.`;
+                document.getElementById('feedback').textContent = 'Add words to the Google Sheet and click "Refresh Word List".';
+                document.getElementById('feedback').style.color = 'red';
+                return;
+            }
+            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+            document.getElementById('wordDisplay').textContent = `Word: ${currentWord} (${lang === 'en' ? 'English' : 'Malay'})`;
+            document.getElementById('songInput').value = '';
+            document.getElementById('feedback').textContent = '';
+        }
+
+        function checkSong() {
+            const player = document.getElementById('playerSelect').value;
+            const songInput = document.getElementById('songInput').value.trim();
+            const feedback = document.getElementById('feedback');
+
+            if (!songInput) {
+                feedback.textContent = 'Please enter the song title you sang.';
+                feedback.style.color = 'red';
+                return;
+            }
+
+            if (songInput.toLowerCase().includes(currentWord.toLowerCase())) {
+                players[player] += 1;
+                feedback.textContent = `Nice singing! "${songInput}" contains "${currentWord}". ${player} earns 1 point!`;
+                feedback.style.color = 'green';
+            } else {
+                feedback.textContent = `Sorry, "${songInput}" does not contain "${currentWord}". Try another song!`;
+                feedback.style.color = 'red';
+            }
+
+            updateLeaderboard();
+        }
+    </script>
+</body>
+</html>
