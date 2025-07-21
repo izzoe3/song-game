@@ -2,236 +2,299 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Song Association Game</title>
   <style>
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
+      background-color: #f9f9f9;
       color: #333;
     }
-    header, main, section, footer {
-      padding: 1rem;
-    }
+
     .container {
       max-width: 600px;
       margin: auto;
+      padding: 1rem;
     }
-    h1, h2, h3 {
+
+    h1, h2 {
       text-align: center;
     }
+
     .hidden {
       display: none;
     }
+
+    input, select, button, textarea {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 1rem;
+    }
+
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 1rem;
+      cursor: pointer;
+      background: #eee;
+      border: 1px solid #ccc;
+    }
+
+    .tab.active {
+      background: #007bff;
+      color: white;
+    }
+
     .word-display {
-      font-size: 3rem;
+      font-size: 2.5rem;
       font-weight: bold;
       text-align: center;
       margin: 2rem 0;
     }
-    button, select, input[type="text"] {
-      display: block;
-      width: 100%;
-      margin: 0.5rem 0;
-      padding: 0.8rem;
-      font-size: 1rem;
-      border-radius: 8px;
-      border: 1px solid #ccc;
+
+    .score-list {
+      list-style: none;
+      padding: 0;
     }
-    .flex-row {
-      display: flex;
-      gap: 0.5rem;
+
+    .score-list li {
+      padding: 0.5rem 0;
     }
-    .flex-row > * {
-      flex: 1;
-    }
-    .scoreboard {
-      border-top: 1px solid #ccc;
-      margin-top: 1rem;
-      padding-top: 1rem;
-    }
-    .scoreboard table {
-      width: 100%;
-      text-align: left;
-    }
-    .scoreboard td {
-      padding: 0.3rem 0;
-    }
+
     .error {
       color: red;
+      font-weight: bold;
       text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
+
     <!-- Start Screen -->
-    <section id="startScreen">
-      <h1>Song Association Game</h1>
-      <input id="playerInput" type="text" placeholder="Enter player names, separated by commas" />
-      <select id="languageSelect">
+    <div id="start-screen">
+      <h1>🎵 Song Association Game</h1>
+      <input id="player-names" placeholder="Enter player names, comma-separated">
+      <select id="language">
         <option value="english">English</option>
         <option value="malay">Malay</option>
         <option value="both">Both</option>
       </select>
       <button onclick="startGame()">Start Game</button>
-    </section>
+    </div>
 
-    <!-- Game Screen -->
-    <section id="gameScreen" class="hidden">
-      <div class="word-display" id="currentWord"></div>
-      <select id="scorerSelect">
-        <option value="">-- Select Player --</option>
-      </select>
-      <div class="flex-row">
-        <button onclick="submitScore()">Next Word</button>
-        <button onclick="skipWord()">Skip Word</button>
+    <!-- Main App -->
+    <div id="main-app" class="hidden">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('game')">Game</div>
+        <div class="tab" onclick="switchTab('settings')">Settings</div>
       </div>
-      <div class="error" id="errorDisplay"></div>
-      <button onclick="showSettings()">Settings</button>
-    </section>
 
-    <!-- Settings Tab -->
-    <section id="settingsScreen" class="hidden">
-      <h2>Settings</h2>
-      <button onclick="backToGame()">Back to Game</button>
-      <input id="addPlayerInput" type="text" placeholder="Add new player name" />
-      <button onclick="addPlayer()">Add Player</button>
-      <select id="languageSetting">
-        <option value="english">English</option>
-        <option value="malay">Malay</option>
-        <option value="both">Both</option>
-      </select>
-      <button onclick="refreshWordList()">Refresh Word List</button>
-      <button onclick="toggleScoreboard()">Toggle Scoreboard</button>
-      <div id="scoreboard" class="scoreboard hidden"></div>
-    </section>
+      <div id="game-tab">
+        <h2>Sing a song with this word:</h2>
+        <div class="word-display" id="word-display">---</div>
+
+        <select id="score-player">
+          <option value="">-- Select Player --</option>
+        </select>
+
+        <div class="error" id="score-error"></div>
+
+        <button onclick="addScore()">✅ Add Score</button>
+        <button onclick="nextWord()">🔁 Next Word</button>
+        <button onclick="skipWord()">⏭️ Skip Word</button>
+      </div>
+
+      <div id="settings-tab" class="hidden">
+        <h2>Settings</h2>
+
+        <button onclick="toggleScoreboard()">👁️ Toggle Scoreboard</button>
+        <ul id="scoreboard" class="score-list hidden"></ul>
+
+        <h3>Adjust Scores</h3>
+        <div id="score-adjustments"></div>
+
+        <h3>Add More Players</h3>
+        <input id="new-player" placeholder="Add player name">
+        <button onclick="addNewPlayer()">Add Player</button>
+
+        <h3>Change Language</h3>
+        <select id="language-setting" onchange="changeLanguage(this.value)">
+          <option value="english">English</option>
+          <option value="malay">Malay</option>
+          <option value="both">Both</option>
+        </select>
+
+        <h3>Refresh Word List</h3>
+        <button onclick="fetchWordList()">🔄 Refresh Word List</button>
+      </div>
+    </div>
   </div>
 
   <script>
+    const englishCSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv";
+    let wordList = { english: [], malay: [] };
     let players = [];
     let scores = {};
-    let words = { english: [], malay: [] };
-    let currentLanguage = 'english';
-    let currentIndex = 0;
-    let altLangFlag = true;
+    let currentLanguage = "english";
+    let lastUsedLanguage = "malay"; // To alternate when both
 
-    const startGame = () => {
-      players = document.getElementById('playerInput').value.split(',').map(p => p.trim()).filter(Boolean);
-      currentLanguage = document.getElementById('languageSelect').value;
-      if (players.length === 0) return alert('Enter at least one player');
+    function fetchWordList() {
+      fetch(englishCSV)
+        .then(r => r.text())
+        .then(csv => {
+          const rows = csv.split("\n").map(r => r.trim());
+          wordList.english = rows.filter(w => w && /^[a-zA-Z]+$/.test(w));
+          wordList.malay = rows.filter(w => w && /^[a-zA-Z]+$/.test(w));
+          console.log("Word list loaded");
+        });
+    }
 
+    fetchWordList();
+
+    function startGame() {
+      const names = document.getElementById('player-names').value.split(",").map(n => n.trim()).filter(n => n);
+      if (names.length === 0) return alert("Enter at least one name");
+      players = names;
+      scores = {};
       players.forEach(p => scores[p] = 0);
-      populateScorerDropdown();
-      refreshWordList(true);
+      currentLanguage = document.getElementById("language").value;
+      document.getElementById("language-setting").value = currentLanguage;
 
-      document.getElementById('startScreen').classList.add('hidden');
-      document.getElementById('gameScreen').classList.remove('hidden');
-    };
-
-    const populateScorerDropdown = () => {
-      const scorerSelect = document.getElementById('scorerSelect');
-      scorerSelect.innerHTML = '<option value="">-- Select Player --</option>';
+      // Fill dropdown
+      const dropdown = document.getElementById("score-player");
+      dropdown.innerHTML = '<option value="">-- Select Player --</option>';
       players.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p;
-        opt.textContent = p;
-        scorerSelect.appendChild(opt);
+        const opt = document.createElement("option");
+        opt.value = opt.text = p;
+        dropdown.appendChild(opt);
       });
-    };
 
-    const showSettings = () => {
-      document.getElementById('gameScreen').classList.add('hidden');
-      document.getElementById('settingsScreen').classList.remove('hidden');
-      document.getElementById('languageSetting').value = currentLanguage;
-    };
+      document.getElementById("start-screen").classList.add("hidden");
+      document.getElementById("main-app").classList.remove("hidden");
+      updateScoreboard();
+      buildAdjustments();
+      nextWord();
+    }
 
-    const backToGame = () => {
-      document.getElementById('settingsScreen').classList.add('hidden');
-      document.getElementById('gameScreen').classList.remove('hidden');
-    };
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#game-tab, #settings-tab').forEach(t => t.classList.add('hidden'));
 
-    const addPlayer = () => {
-      const newName = document.getElementById('addPlayerInput').value.trim();
-      if (newName && !players.includes(newName)) {
-        players.push(newName);
-        scores[newName] = 0;
-        populateScorerDropdown();
+      if (tab === 'game') {
+        document.querySelector('.tab:nth-child(1)').classList.add('active');
+        document.getElementById('game-tab').classList.remove('hidden');
+      } else {
+        document.querySelector('.tab:nth-child(2)').classList.add('active');
+        document.getElementById('settings-tab').classList.remove('hidden');
       }
-      document.getElementById('addPlayerInput').value = '';
-    };
+    }
 
-    const refreshWordList = async (autoStart = false) => {
-      try {
-        const res = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv');
-        const csv = await res.text();
-        const lines = csv.trim().split('\n');
-        const [header, ...data] = lines.map(line => line.split(','));
-        const engIndex = header.indexOf('english');
-        const malayIndex = header.indexOf('malay');
-
-        words.english = data.map(row => row[engIndex]).filter(Boolean);
-        words.malay = data.map(row => row[malayIndex]).filter(Boolean);
-
-        if (autoStart) generateWord();
-      } catch (e) {
-        alert('Failed to load word list');
-      }
-    };
-
-    const generateWord = () => {
-      document.getElementById('errorDisplay').textContent = '';
-      const lang = currentLanguage === 'both' ? (altLangFlag ? 'english' : 'malay') : currentLanguage;
-      altLangFlag = !altLangFlag;
-      const pool = words[lang];
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      document.getElementById('currentWord').textContent = pool[randomIndex] || '[No Word]';
-    };
-
-    const submitScore = () => {
-      const name = document.getElementById('scorerSelect').value;
-      if (!name) {
-        document.getElementById('errorDisplay').textContent = 'Select a player before generating the next word.';
+    function nextWord() {
+      document.getElementById("score-error").innerText = "";
+      const player = document.getElementById("score-player").value;
+      if (!player) {
+        document.getElementById("score-error").innerText = "⚠️ Please select a player who scored!";
         return;
       }
-      scores[name] += 1;
-      document.getElementById('scorerSelect').value = '';
-      generateWord();
-    };
 
-    const skipWord = () => {
-      document.getElementById('scorerSelect').value = '';
-      document.getElementById('errorDisplay').textContent = '';
-      generateWord();
-    };
+      document.getElementById("score-player").value = "";
 
-    const toggleScoreboard = () => {
-      const sb = document.getElementById('scoreboard');
-      sb.classList.toggle('hidden');
-      if (!sb.classList.contains('hidden')) {
-        let html = '<h3>Scoreboard</h3><table>';
-        players.forEach(p => {
-          html += `<tr><td>${p}</td><td>${scores[p]}</td>
-          <td><button onclick="adjustScore('${p}', 1)">+</button></td>
-          <td><button onclick="adjustScore('${p}', -1)">-</button></td></tr>`;
-        });
-        html += '</table>';
-        sb.innerHTML = html;
-      } else {
-        sb.innerHTML = '';
+      if (currentLanguage === "both") {
+        lastUsedLanguage = (lastUsedLanguage === "english") ? "malay" : "english";
       }
-    };
 
-    const adjustScore = (player, delta) => {
-      scores[player] += delta;
-      toggleScoreboard();
-      toggleScoreboard(); // refresh scoreboard UI
-    };
+      const lang = currentLanguage === "both" ? lastUsedLanguage : currentLanguage;
+      const list = wordList[lang];
+      const word = list[Math.floor(Math.random() * list.length)];
+      document.getElementById("word-display").innerText = word;
+    }
 
-    document.getElementById('languageSetting').addEventListener('change', (e) => {
-      currentLanguage = e.target.value;
-    });
+    function skipWord() {
+      document.getElementById("score-player").value = "";
+      nextWord();
+    }
+
+    function addScore() {
+      const player = document.getElementById("score-player").value;
+      if (!player) {
+        document.getElementById("score-error").innerText = "⚠️ Please select a player who scored!";
+        return;
+      }
+      scores[player]++;
+      updateScoreboard();
+      buildAdjustments();
+    }
+
+    function updateScoreboard() {
+      const board = document.getElementById("scoreboard");
+      board.innerHTML = "";
+      for (const p of players) {
+        const li = document.createElement("li");
+        li.textContent = `${p}: ${scores[p]}`;
+        board.appendChild(li);
+      }
+    }
+
+    function toggleScoreboard() {
+      document.getElementById("scoreboard").classList.toggle("hidden");
+    }
+
+    function buildAdjustments() {
+      const container = document.getElementById("score-adjustments");
+      container.innerHTML = "";
+      players.forEach(p => {
+        const row = document.createElement("div");
+        row.innerHTML = `
+          <label>${p}: <input type="number" value="${scores[p]}" onchange="adjustScore('${p}', this.value)"></label>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    function adjustScore(player, value) {
+      scores[player] = parseInt(value);
+      updateScoreboard();
+    }
+
+    function addNewPlayer() {
+      const name = document.getElementById("new-player").value.trim();
+      if (!name || players.includes(name)) return;
+      players.push(name);
+      scores[name] = 0;
+      document.getElementById("new-player").value = "";
+      const opt = document.createElement("option");
+      opt.value = opt.text = name;
+      document.getElementById("score-player").appendChild(opt);
+      updateScoreboard();
+      buildAdjustments();
+    }
+
+    function changeLanguage(value) {
+      currentLanguage = value;
+    }
   </script>
 </body>
 </html>
