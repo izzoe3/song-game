@@ -23,12 +23,12 @@
     <link rel="icon" href="/song-game/icons/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QY8NH7DK0E"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'G-QY8NH7DK0E');
+        gtag('config', 'G-XXXXXXXXXX');
     </script>
     <style>
         body {
@@ -141,6 +141,14 @@
         }
         button i {
             margin-right: 8px;
+        }
+        .help-icon {
+            font-size: 0.9rem;
+            padding: 8px;
+            min-height: auto;
+            width: auto;
+            display: inline-block;
+            margin-left: 10px;
         }
         .ripple {
             position: absolute;
@@ -322,6 +330,10 @@
             legend {
                 font-size: 0.9rem;
             }
+            .help-icon {
+                font-size: 0.8rem;
+                padding: 6px;
+            }
         }
     </style>
 </head>
@@ -390,7 +402,7 @@
             <div id="wordCountDisplay"></div>
         </div>
         <div id="settingsTab" class="tab-content" style="display: none;">
-            <h1>Settings</h1>
+            <h1>Settings <a href="/song-game/custom-word-list.md" target="_blank" class="help-icon" aria-label="View custom word list guide"><i class="fas fa-question-circle"></i></a></h1>
             <div class="settings-group">
                 <fieldset>
                     <legend>Player Management</legend>
@@ -627,7 +639,7 @@
                 return;
             }
             if (!newUrl.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/.*\/pub\?output=csv$/)) {
-                feedback.textContent = 'Invalid Google Sheet URL. Use a public CSV link (File > Share > Publish to web > Comma-separated values).';
+                feedback.textContent = 'Invalid Google Sheet URL. Use a public CSV link (File > Share > Publish to web > Comma-separated values). See the help guide for details.';
                 feedback.className = 'red fade-in';
                 return;
             }
@@ -808,10 +820,11 @@
                 return false;
             }
             try {
+                const urlWithCacheBust = `${currentSheetUrl}?t=${new Date().getTime()}`;
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error('Fetch timeout: Unable to load words within 10 seconds')), 10000);
                 });
-                const fetchPromise = fetch(currentSheetUrl);
+                const fetchPromise = fetch(urlWithCacheBust);
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
                 if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch word list`);
                 const csvText = await response.text();
@@ -827,9 +840,9 @@
                     throw new Error('No valid words found in the word list');
                 }
                 localStorage.setItem('songGameWords', JSON.stringify({ english: wordLists.english, malay: wordLists.malay }));
-                usedWords = { english: [], malay: [] };
+                usedWords = { english: [], malay: [] }; // Reset used words on successful fetch
                 saveSessionState();
-                feedback.textContent = `Word list loaded successfully from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet!`;
+                feedback.textContent = `Word list loaded successfully from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet! ${wordLists.english.length} English and ${wordLists.malay.length} Malay words available.`;
                 feedback.className = 'green fade-in';
                 updateWordCount();
                 return true;
@@ -851,7 +864,7 @@
                         return true;
                     }
                 }
-                feedback.textContent = 'Error: Could not load word list. Ensure the Google Sheet is public (CSV, “Anyone with the link”). Retry in Settings.';
+                feedback.textContent = 'Error: Could not load word list. Ensure the Google Sheet is public (CSV, “Anyone with the link”). Retry in Settings or see the help guide.';
                 feedback.className = 'red fade-in';
                 const retryBtn = document.createElement('button');
                 retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Now';
@@ -868,7 +881,7 @@
             feedback.className = 'fade-in';
             const success = await fetchWords();
             if (success) {
-                feedback.textContent = `Word list refreshed from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet! Return to Game tab to continue.`;
+                feedback.textContent = `Word list refreshed from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet! ${wordLists.english.length} English and ${wordLists.malay.length} Malay words available.`;
                 feedback.className = 'green fade-in';
                 document.getElementById('resetUsedWordsBtn').classList.add('hidden');
                 generateWord(true);
