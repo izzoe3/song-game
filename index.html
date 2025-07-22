@@ -23,12 +23,12 @@
     <link rel="icon" href="/song-game/icons/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QY8NH7DK0E"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'G-XXXXXXXXXX');
+        gtag('config', 'G-QY8NH7DK0E');
     </script>
     <style>
         body {
@@ -560,14 +560,16 @@
                 const state = localStorage.getItem('songGameState');
                 if (state) {
                     const parsed = JSON.parse(state);
-                    players = parsed.players && Object.keys(parsed.players).length ? parsed.players : {};
-                    usedWords = parsed.usedWords || { english: [], malay: [] };
+                    // Validate players object
+                    players = (parsed.players && typeof parsed.players === 'object' && Object.keys(parsed.players).length) ? parsed.players : {};
+                    usedWords = parsed.usedWords && parsed.usedWords.english && parsed.usedWords.malay ? parsed.usedWords : { english: [], malay: [] };
                     gameMode = parsed.gameMode || 'regular';
                     languageMode = parsed.languageMode || 'en';
                     useEnglish = parsed.useEnglish !== undefined ? parsed.useEnglish : true;
                     currentWord = parsed.currentWord || '';
                     currentSheetUrl = parsed.currentSheetUrl || defaultSheetUrl;
                     console.log('Session state loaded:', parsed);
+                    console.log('Loaded players:', players); // Debug log
                     document.getElementById('welcomeModal').style.display = 'none';
                     document.getElementById('modeModal').style.display = 'none';
                     document.getElementById('playerModal').style.display = 'none';
@@ -620,6 +622,7 @@
                 }
             } catch (e) {
                 console.error('Failed to load session state:', e.message);
+                players = {}; // Fallback to empty players
                 document.getElementById('feedback').textContent = 'Error loading game state. Starting fresh.';
                 document.getElementById('feedback').className = 'red fade-in';
                 document.getElementById('welcomeModal').style.display = 'flex';
@@ -819,24 +822,39 @@
 
         function endGame() {
             if (gameMode === 'casual') return;
-            console.log('Ending game, current players:', players); // Debug log
+            console.log('Ending game, current players:', JSON.stringify(players)); // Debug log
             const finalLeaderboardList = document.getElementById('finalLeaderboardList');
             const endGameMessage = document.getElementById('endGameMessage');
-            finalLeaderboardList.innerHTML = '';
-            if (Object.keys(players).length === 0) {
-                endGameMessage.textContent = 'No scores to display. Play to earn points!';
-                finalLeaderboardList.innerHTML = '<li>No scores to display. Play to earn points!</li>';
+            finalLeaderboardList.innerHTML = ''; // Clear previous content
+            const fragment = document.createDocumentFragment(); // Use fragment for performance
+
+            if (!players || typeof players !== 'object' || Object.keys(players).length === 0) {
+                endGameMessage.textContent = 'No players added. Start a new game!';
+                const li = document.createElement('li');
+                li.textContent = 'No players added. Start a new game!';
+                fragment.appendChild(li);
+                console.warn('No valid players found for endGame:', players);
             } else {
                 const sortedPlayers = Object.entries(players).sort((a, b) => b[1] - a[1]);
+                console.log('Sorted players for leaderboard:', sortedPlayers); // Debug log
                 const maxScore = sortedPlayers[0][1];
                 const isTie = sortedPlayers.filter(([_, score]) => score === maxScore).length > 1;
                 endGameMessage.textContent = isTie ? 'It’s a tie! Continue playing or start a new game.' : 'Final scores:';
-                sortedPlayers.forEach(([name, score]) => {
+                if (sortedPlayers.every(([_, score]) => score === 0)) {
+                    endGameMessage.textContent = 'No scores earned. Play to earn points!';
                     const li = document.createElement('li');
-                    li.textContent = `${name}: ${score} points`;
-                    finalLeaderboardList.appendChild(li);
-                });
+                    li.textContent = 'No scores earned. Play to earn points!';
+                    fragment.appendChild(li);
+                } else {
+                    sortedPlayers.forEach(([name, score]) => {
+                        const li = document.createElement('li');
+                        li.textContent = `${name}: ${score} points`;
+                        fragment.appendChild(li);
+                    });
+                }
             }
+
+            finalLeaderboardList.appendChild(fragment);
             document.getElementById('endGameModal').style.display = 'flex';
             document.getElementById('feedback').textContent = 'Game ended! Check the final scores.';
             document.getElementById('feedback').className = 'green fade-in';
@@ -1115,6 +1133,7 @@
         function incrementScore(player) {
             if (gameMode === 'casual') return;
             players[player] = (players[player] || 0) + 1;
+            console.log(`Incremented score for ${player}: ${players[player]}`); // Debug log
             updateLeaderboard();
             updatePlayerSelect();
             document.getElementById('feedbackSettings').textContent = `Added 1 point to ${player}.`;
@@ -1126,6 +1145,7 @@
             if (gameMode === 'casual') return;
             if (players[player] > 0) {
                 players[player] -= 1;
+                console.log(`Decremented score for ${player}: ${players[player]}`); // Debug log
                 updateLeaderboard();
                 updatePlayerSelect();
                 document.getElementById('feedbackSettings').textContent = `Removed 1 point from ${player}.`;
@@ -1198,6 +1218,7 @@
                 feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
                 feedback.className = 'green fade-in';
                 console.log(`Point added to ${player}, new score: ${players[player]}`); // Debug log
+                saveSessionState(); // Ensure immediate save after score update
             } else if (gameMode === 'casual') {
                 feedback.textContent = 'New word generated!';
                 feedback.className = 'green fade-in';
@@ -1301,6 +1322,7 @@
                 return;
             }
             players[newPlayer] = 0;
+            console.log(`Added player ${newPlayer}, players:`, players); // Debug log
             updatePlayerSelect();
             updateRemovePlayerSelect();
             updateLeaderboard();
@@ -1320,6 +1342,7 @@
                 return;
             }
             delete players[playerToRemove];
+            console.log(`Removed player ${playerToRemove}, players:`, players); // Debug log
             updatePlayerSelect();
             updateRemovePlayerSelect();
             updateLeaderboard();
