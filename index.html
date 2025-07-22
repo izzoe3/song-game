@@ -243,13 +243,23 @@
             from { transform: translateY(-50px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        .modal-content input, .modal-content select {
+        .modal-content input, .modal-content select, .modal-content button {
             margin: 10px auto;
             width: 100%;
             box-sizing: border-box;
         }
         .modal-content p {
             font-size: 0.9rem;
+        }
+        .modal-content .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .modal-content .button-group button {
+            flex: 1;
+            min-width: 120px;
         }
         .hidden {
             display: none;
@@ -334,6 +344,13 @@
                 font-size: 0.8rem;
                 padding: 6px;
             }
+            .modal-content .button-group {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .modal-content .button-group button {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
@@ -380,12 +397,16 @@
     <div id="endGameModal" class="modal">
         <div class="modal-content">
             <h2>Game Over!</h2>
-            <p>Final scores:</p>
+            <p id="endGameMessage">Final scores:</p>
             <div id="finalLeaderboard">
                 <ul id="finalLeaderboardList"></ul>
             </div>
-            <button onclick="startNewRegularGame()" aria-label="Start a new Regular Mode game"><i class="fas fa-users"></i> New Regular Game</button>
-            <button onclick="changeMode()" aria-label="Change game mode"><i class="fas fa-redo"></i> Change Mode</button>
+            <div class="button-group">
+                <button onclick="closeEndGameModal()" aria-label="Close end game modal"><i class="fas fa-times"></i> Close Window</button>
+                <button onclick="continueGame()" aria-label="Continue current game"><i class="fas fa-play"></i> Continue</button>
+                <button onclick="startNewRegularGame()" aria-label="Start a new Regular Mode game"><i class="fas fa-users"></i> New Regular Game</button>
+                <button onclick="changeMode()" aria-label="Change game mode"><i class="fas fa-redo"></i> Change Mode</button>
+            </div>
         </div>
     </div>
     <div class="container">
@@ -449,7 +470,7 @@
             <div id="feedbackSettings" role="status" aria-live="polite"></div>
         </div>
     </div>
-    <div class="app-version">App Version: 1.4.1</div>
+    <div class="app-version">App Version: 1.4.2</div>
     <div id="updateNotice" class="update-notice">New version available! Refresh to update.</div>
     <div class="copyright">© 2025 Izzoe. All rights reserved. Unauthorized copying prohibited.</div>
 
@@ -463,7 +484,7 @@
         const defaultSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let currentSheetUrl = defaultSheetUrl;
         let wordLists = { english: [], malay: [] };
-        const APP_VERSION = '1.4.1';
+        const APP_VERSION = '1.4.2';
         let deferredPrompt;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -497,6 +518,7 @@
         window.addEventListener('load', () => {
             loadSessionState();
             checkForUpdates();
+            setInterval(checkForUpdates, 300000); // Check every 5 minutes for PWA
             loadCustomSheetUrl();
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/song-game/sw.js')
@@ -514,8 +536,8 @@
 
         function saveSessionState() {
             const state = {
-                players: Object.keys(players).length ? players : {},
-                usedWords,
+                players: JSON.parse(JSON.stringify(players)), // Deep copy to avoid reference issues
+                usedWords: JSON.parse(JSON.stringify(usedWords)),
                 gameMode,
                 languageMode,
                 useEnglish,
@@ -523,72 +545,84 @@
                 currentSheetUrl,
                 appVersion: APP_VERSION
             };
-            localStorage.setItem('songGameState', JSON.stringify(state));
-            console.log('Session state saved:', state);
+            try {
+                localStorage.setItem('songGameState', JSON.stringify(state));
+                console.log('Session state saved:', state);
+            } catch (e) {
+                console.error('Failed to save session state:', e.message);
+                document.getElementById('feedback').textContent = 'Error saving game state. Scores may not persist.';
+                document.getElementById('feedback').className = 'red fade-in';
+            }
         }
 
         function loadSessionState() {
-            const state = localStorage.getItem('songGameState');
-            if (state) {
-                const parsed = JSON.parse(state);
-                players = parsed.players && Object.keys(parsed.players).length ? parsed.players : {};
-                usedWords = parsed.usedWords || { english: [], malay: [] };
-                gameMode = parsed.gameMode || 'regular';
-                languageMode = parsed.languageMode || 'en';
-                useEnglish = parsed.useEnglish !== undefined ? parsed.useEnglish : true;
-                currentWord = parsed.currentWord || '';
-                currentSheetUrl = parsed.currentSheetUrl || defaultSheetUrl;
-                console.log('Session state loaded:', parsed);
-                document.getElementById('welcomeModal').style.display = 'none';
-                document.getElementById('modeModal').style.display = 'none';
-                document.getElementById('playerModal').style.display = 'none';
-                document.getElementById('resetModal').style.display = 'none';
-                document.getElementById('endGameModal').style.display = 'none';
-                document.getElementById('gameTab').style.display = 'block';
-                document.getElementById('settingsTab').style.display = 'none';
-                document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
-                document.getElementById('languageChangeSelect').value = languageMode;
-                document.getElementById('customSheetUrl').value = currentSheetUrl;
-                document.getElementById('wordDisplay').textContent = currentWord || 'Loading...';
-                if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
-                if (gameMode === 'casual') {
-                    document.getElementById('settingsTabButton').classList.add('hidden');
-                    document.getElementById('playerSelect').classList.add('hidden');
-                    document.getElementById('skipWordBtn').classList.add('hidden');
-                    document.getElementById('endGameBtn').classList.add('hidden');
-                    document.getElementById('resetModeBtn').classList.remove('hidden');
-                    document.getElementById('generateWordBtn').disabled = false;
-                } else {
-                    document.getElementById('settingsTabButton').classList.remove('hidden');
-                    document.getElementById('playerSelect').classList.remove('hidden');
-                    document.getElementById('skipWordBtn').classList.remove('hidden');
-                    document.getElementById('endGameBtn').classList.remove('hidden');
-                    document.getElementById('resetModeBtn').classList.add('hidden');
-                    document.getElementById('generateWordBtn').disabled = !document.getElementById('playerSelect').value;
-                }
-                document.getElementById('leaderboard').style.display = 'none';
-                document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
-                updatePlayerSelect();
-                updateRemovePlayerSelect();
-                updateLeaderboard();
-                updateWordCount();
-                if (!wordLists.english.length && !wordLists.malay.length) {
-                    fetchWords().then(success => {
-                        if (success && currentWord) {
-                            document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
-                            document.getElementById('feedback').className = 'green fade-in';
-                            updateWordCount();
-                        }
-                    });
-                } else {
-                    document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
-                    document.getElementById('feedback').className = 'green fade-in';
+            try {
+                const state = localStorage.getItem('songGameState');
+                if (state) {
+                    const parsed = JSON.parse(state);
+                    players = parsed.players && Object.keys(parsed.players).length ? parsed.players : {};
+                    usedWords = parsed.usedWords || { english: [], malay: [] };
+                    gameMode = parsed.gameMode || 'regular';
+                    languageMode = parsed.languageMode || 'en';
+                    useEnglish = parsed.useEnglish !== undefined ? parsed.useEnglish : true;
+                    currentWord = parsed.currentWord || '';
+                    currentSheetUrl = parsed.currentSheetUrl || defaultSheetUrl;
+                    console.log('Session state loaded:', parsed);
+                    document.getElementById('welcomeModal').style.display = 'none';
+                    document.getElementById('modeModal').style.display = 'none';
+                    document.getElementById('playerModal').style.display = 'none';
+                    document.getElementById('resetModal').style.display = 'none';
+                    document.getElementById('endGameModal').style.display = 'none';
+                    document.getElementById('gameTab').style.display = 'block';
+                    document.getElementById('settingsTab').style.display = 'none';
+                    document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
+                    document.getElementById('languageChangeSelect').value = languageMode;
+                    document.getElementById('customSheetUrl').value = currentSheetUrl;
+                    document.getElementById('wordDisplay').textContent = currentWord || 'Loading...';
+                    if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
+                    if (gameMode === 'casual') {
+                        document.getElementById('settingsTabButton').classList.add('hidden');
+                        document.getElementById('playerSelect').classList.add('hidden');
+                        document.getElementById('skipWordBtn').classList.add('hidden');
+                        document.getElementById('endGameBtn').classList.add('hidden');
+                        document.getElementById('resetModeBtn').classList.remove('hidden');
+                        document.getElementById('generateWordBtn').disabled = false;
+                    } else {
+                        document.getElementById('settingsTabButton').classList.remove('hidden');
+                        document.getElementById('playerSelect').classList.remove('hidden');
+                        document.getElementById('skipWordBtn').classList.remove('hidden');
+                        document.getElementById('endGameBtn').classList.remove('hidden');
+                        document.getElementById('resetModeBtn').classList.add('hidden');
+                    }
+                    document.getElementById('leaderboard').style.display = 'none';
+                    document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+                    updatePlayerSelect();
+                    updateRemovePlayerSelect();
+                    updateLeaderboard();
                     updateWordCount();
+                    if (!wordLists.english.length && !wordLists.malay.length) {
+                        fetchWords().then(success => {
+                            if (success && currentWord) {
+                                document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
+                                document.getElementById('feedback').className = 'green fade-in';
+                                updateWordCount();
+                            }
+                        });
+                    } else {
+                        document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
+                        document.getElementById('feedback').className = 'green fade-in';
+                        updateWordCount();
+                    }
+                } else {
+                    document.getElementById('welcomeModal').style.display = 'flex';
+                    document.getElementById('leaderboard').style.display = 'none';
+                    document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
                 }
-            } else {
+            } catch (e) {
+                console.error('Failed to load session state:', e.message);
+                document.getElementById('feedback').textContent = 'Error loading game state. Starting fresh.';
+                document.getElementById('feedback').className = 'red fade-in';
                 document.getElementById('welcomeModal').style.display = 'flex';
-                document.getElementById('leaderboard').style.display = 'none';
-                document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
             }
         }
 
@@ -688,26 +722,42 @@
         }
 
         async function checkForUpdates() {
+            const updateNotice = document.getElementById('updateNotice');
             try {
-                const response = await fetch('/song-game/version.txt', { cache: 'no-store' });
+                const response = await fetch('/song-game/version.txt', {
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+                });
                 if (!response.ok) {
                     console.warn(`Version check failed: HTTP ${response.status}`);
-                    document.getElementById('updateNotice').style.display = 'none';
+                    updateNotice.style.display = 'none';
                     return;
                 }
                 const serverVersion = await response.text();
                 if (serverVersion.trim() !== APP_VERSION) {
-                    document.getElementById('updateNotice').style.display = 'block';
-                    document.getElementById('updateNotice').onclick = () => {
-                        location.reload();
-                        document.getElementById('updateNotice').style.display = 'none';
+                    updateNotice.style.display = 'block';
+                    updateNotice.onclick = async () => {
+                        try {
+                            if ('serviceWorker' in navigator) {
+                                const reg = await navigator.serviceWorker.getRegistration();
+                                if (reg) await reg.unregister();
+                                console.log('Service worker unregistered for version update');
+                                await navigator.serviceWorker.register('/song-game/sw.js');
+                                console.log('Service worker re-registered');
+                            }
+                            location.reload();
+                            updateNotice.style.display = 'none';
+                        } catch (e) {
+                            console.error('Failed to update service worker:', e.message);
+                            updateNotice.textContent = 'Update failed. Clear browser cache and try again.';
+                        }
                     };
                 } else {
-                    document.getElementById('updateNotice').style.display = 'none';
+                    updateNotice.style.display = 'none';
                 }
             } catch (e) {
                 console.warn('Version check failed:', e.message);
-                document.getElementById('updateNotice').style.display = 'none';
+                updateNotice.style.display = 'none';
             }
         }
 
@@ -771,13 +821,17 @@
             if (gameMode === 'casual') return;
             console.log('Ending game, current players:', players); // Debug log
             const finalLeaderboardList = document.getElementById('finalLeaderboardList');
+            const endGameMessage = document.getElementById('endGameMessage');
             finalLeaderboardList.innerHTML = '';
             if (Object.keys(players).length === 0) {
-                const li = document.createElement('li');
-                li.textContent = 'No scores to display. Play to earn points!';
-                finalLeaderboardList.appendChild(li);
+                endGameMessage.textContent = 'No scores to display. Play to earn points!';
+                finalLeaderboardList.innerHTML = '<li>No scores to display. Play to earn points!</li>';
             } else {
-                Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
+                const sortedPlayers = Object.entries(players).sort((a, b) => b[1] - a[1]);
+                const maxScore = sortedPlayers[0][1];
+                const isTie = sortedPlayers.filter(([_, score]) => score === maxScore).length > 1;
+                endGameMessage.textContent = isTie ? 'It’s a tie! Continue playing or start a new game.' : 'Final scores:';
+                sortedPlayers.forEach(([name, score]) => {
                     const li = document.createElement('li');
                     li.textContent = `${name}: ${score} points`;
                     finalLeaderboardList.appendChild(li);
@@ -786,6 +840,22 @@
             document.getElementById('endGameModal').style.display = 'flex';
             document.getElementById('feedback').textContent = 'Game ended! Check the final scores.';
             document.getElementById('feedback').className = 'green fade-in';
+            saveSessionState();
+        }
+
+        function closeEndGameModal() {
+            document.getElementById('endGameModal').style.display = 'none';
+            document.getElementById('feedback').textContent = 'Modal closed. Continue playing or end game again.';
+            document.getElementById('feedback').className = 'green fade-in';
+        }
+
+        function continueGame() {
+            if (gameMode === 'casual') return;
+            document.getElementById('endGameModal').style.display = 'none';
+            document.getElementById('generateWordBtn').disabled = !document.getElementById('playerSelect').value;
+            document.getElementById('feedback').textContent = 'Game resumed! Generate a new word to continue.';
+            document.getElementById('feedback').className = 'green fade-in';
+            saveSessionState();
         }
 
         function startNewRegularGame() {
@@ -1049,6 +1119,7 @@
             updatePlayerSelect();
             document.getElementById('feedbackSettings').textContent = `Added 1 point to ${player}.`;
             document.getElementById('feedbackSettings').className = 'green fade-in';
+            saveSessionState();
         }
 
         function decrementScore(player) {
@@ -1063,6 +1134,7 @@
                 document.getElementById('feedbackSettings').textContent = `${player} already has 0 points.`;
                 document.getElementById('feedbackSettings').className = 'red fade-in';
             }
+            saveSessionState();
         }
 
         function toggleLeaderboard() {
@@ -1125,6 +1197,7 @@
                 players[player] = (players[player] || 0) + 1;
                 feedback.textContent = `Nice singing, ${player}! You earn 1 point!`;
                 feedback.className = 'green fade-in';
+                console.log(`Point added to ${player}, new score: ${players[player]}`); // Debug log
             } else if (gameMode === 'casual') {
                 feedback.textContent = 'New word generated!';
                 feedback.className = 'green fade-in';
@@ -1234,6 +1307,7 @@
             document.getElementById('addPlayerInput').value = '';
             feedback.textContent = `Player "${newPlayer}" added!`;
             feedback.className = 'green fade-in';
+            saveSessionState();
         }
 
         function removePlayer() {
@@ -1251,6 +1325,7 @@
             updateLeaderboard();
             feedback.textContent = `Player "${playerToRemove}" removed!`;
             feedback.className = 'green fade-in';
+            saveSessionState();
         }
 
         function changeLanguage() {
@@ -1261,6 +1336,7 @@
             document.getElementById('resetUsedWordsBtn').classList.add('hidden');
             generateWord(true);
             updateWordCount();
+            saveSessionState();
         }
     </script>
 </body>
