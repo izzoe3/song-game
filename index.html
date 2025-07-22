@@ -251,7 +251,7 @@
     <div class="header">
         <h1>Song Association Game</h1>
     </div>
-    <div id="modeModal" class="modal" style="display: flex;">
+    <div id="modeModal" class="modal">
         <div class="modal-content">
             <h2>Choose Game Mode</h2>
             <p>Casual Mode: Generate words without players or scoring.<br>Regular Mode: Play with players, scoring, and leaderboard.</p>
@@ -285,6 +285,7 @@
             </select>
             <button id="generateWordBtn" onclick="generateWord()"><i class="fas fa-sync-alt"></i> Generate New Word</button>
             <button id="skipWordBtn" onclick="skipWord()"><i class="fas fa-forward"></i> Skip Word</button>
+            <button id="resetUsedWordsBtn" onclick="resetUsedWords()" class="hidden"><i class="fas fa-undo"></i> Reset Used Words</button>
             <button id="resetModeBtn" onclick="resetGame()" class="hidden"><i class="fas fa-redo"></i> Reset/Change Mode</button>
             <select id="languageChangeSelect" onchange="changeLanguage()">
                 <option value="en">English</option>
@@ -317,16 +318,90 @@
         let languageMode = 'en';
         let useEnglish = true;
         let gameMode = 'regular';
+        let usedWords = { english: [], malay: [] };
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let wordLists = { english: [], malay: [] };
 
-        // Register service worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+        // Load session state from localStorage on page load
+        window.addEventListener('load', () => {
+            loadSessionState();
+            if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/song-game/sw.js')
                     .then(reg => console.log('Service Worker registered:', reg))
                     .catch(err => console.error('Service Worker registration failed:', err));
-            });
+            }
+        });
+
+        // Save session state to localStorage
+        function saveSessionState() {
+            const state = {
+                players,
+                usedWords,
+                gameMode,
+                languageMode,
+                useEnglish,
+                currentWord
+            };
+            localStorage.setItem('songGameState', JSON.stringify(state));
+            console.log('Session state saved:', state);
+        }
+
+        // Load session state from localStorage
+        function loadSessionState() {
+            const state = localStorage.getItem('songGameState');
+            if (state) {
+                const parsed = JSON.parse(state);
+                players = parsed.players || {};
+                usedWords = parsed.usedWords || { english: [], malay: [] };
+                gameMode = parsed.gameMode || 'regular';
+                languageMode = parsed.languageMode || 'en';
+                useEnglish = parsed.useEnglish !== undefined ? parsed.useEnglish : true;
+                currentWord = parsed.currentWord || '';
+                console.log('Session state loaded:', parsed);
+
+                // Restore UI state
+                document.getElementById('modeModal').style.display = 'none';
+                document.getElementById('playerModal').style.display = 'none';
+                document.getElementById('gameTab').style.display = 'block';
+                document.getElementById('settingsTab').style.display = 'none';
+                document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
+                document.getElementById('languageChangeSelect').value = languageMode;
+                document.getElementById('wordDisplay').textContent = currentWord || 'Loading...';
+                if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
+
+                if (gameMode === 'casual') {
+                    document.getElementById('settingsTabButton').classList.add('hidden');
+                    document.getElementById('playerSelect').classList.add('hidden');
+                    document.getElementById('skipWordBtn').classList.add('hidden');
+                    document.getElementById('resetModeBtn').classList.remove('hidden');
+                    document.getElementById('generateWordBtn').disabled = false;
+                } else {
+                    document.getElementById('settingsTabButton').classList.remove('hidden');
+                    document.getElementById('playerSelect').classList.remove('hidden');
+                    document.getElementById('skipWordBtn').classList.remove('hidden');
+                    document.getElementById('resetModeBtn').classList.add('hidden');
+                    document.getElementById('generateWordBtn').disabled = !document.getElementById('playerSelect').value;
+                }
+
+                updatePlayerSelect();
+                updateRemovePlayerSelect();
+                updateLeaderboard();
+
+                // Fetch words if wordLists are empty
+                if (!wordLists.english.length && !wordLists.malay.length) {
+                    fetchWords().then(success => {
+                        if (success && currentWord) {
+                            document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
+                            document.getElementById('feedback').className = 'green fade-in';
+                        }
+                    });
+                } else {
+                    document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
+                    document.getElementById('feedback').className = 'green fade-in';
+                }
+            } else {
+                document.getElementById('modeModal').style.display = 'flex';
+            }
         }
 
         // Add ripple effect and haptic feedback on button clicks
@@ -346,9 +421,6 @@
             });
         });
 
-        // Show mode selection modal on page load
-        document.getElementById('modeModal').style.display = 'flex';
-
         function selectMode(mode) {
             gameMode = mode;
             document.getElementById('modeModal').style.display = 'none';
@@ -362,11 +434,13 @@
                 playerInput.classList.remove('hidden');
                 setupTitle.textContent = 'Setup Game';
             }
+            saveSessionState();
         }
 
         function resetGame() {
             players = {};
             wordLists = { english: [], malay: [] };
+            usedWords = { english: [], malay: [] };
             currentWord = '';
             languageMode = 'en';
             useEnglish = true;
@@ -384,7 +458,9 @@
             document.getElementById('playerSelect').classList.remove('hidden');
             document.getElementById('skipWordBtn').classList.remove('hidden');
             document.getElementById('resetModeBtn').classList.add('hidden');
+            document.getElementById('resetUsedWordsBtn').classList.add('hidden');
             document.getElementById('generateWordBtn').disabled = true;
+            localStorage.removeItem('songGameState');
             console.log('Game reset, showing mode selection');
         }
 
@@ -419,12 +495,21 @@
                 if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch Google Sheet`);
                 const csvText = await response.text();
                 const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
-                wordLists.malay = rows.slice(1).map(row => row[0]).filter(word => word && word !== '');
-                wordLists.english = rows.slice(1).map(row => row[1]).filter(word => word && word !== '');
+                
+                // Find column indices based on headers (case-insensitive)
+                const headers = rows[0].map(header => header.toLowerCase());
+                const malayCol = headers.indexOf('malay');
+                const englishCol = headers.indexOf('english');
+                if (malayCol === -1 || englishCol === -1) throw new Error('Headers "Malay" or "English" not found in Google Sheet');
+
+                wordLists.malay = rows.slice(1).map(row => row[malayCol]).filter(word => word && word !== '');
+                wordLists.english = rows.slice(1).map(row => row[englishCol]).filter(word => word && word !== '');
                 console.log('Fetched words:', { english: wordLists.english.length, malay: wordLists.malay.length });
                 if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
                     throw new Error('No valid words found in the Google Sheet');
                 }
+                usedWords = { english: [], malay: [] }; // Reset used words on fetch
+                saveSessionState();
                 feedback.textContent = 'Word list loaded successfully!';
                 feedback.className = 'green fade-in';
                 return true;
@@ -440,6 +525,7 @@
             // Reset state to ensure clean start
             players = {};
             wordLists = { english: [], malay: [] };
+            usedWords = { english: [], malay: [] };
             currentWord = '';
             languageMode = document.getElementById('languageSelect').value;
             if (gameMode === 'regular') {
@@ -461,6 +547,7 @@
             document.getElementById('wordDisplay').classList.remove('fade-in');
             document.getElementById('feedback').textContent = '';
             document.getElementById('feedback').classList.remove('fade-in');
+            document.getElementById('resetUsedWordsBtn').classList.add('hidden');
             const wordsLoaded = await fetchWords();
             if (!wordsLoaded) {
                 document.getElementById('wordDisplay').textContent = 'Error: No words available.';
@@ -498,6 +585,7 @@
                 document.getElementById('resetModeBtn').classList.add('hidden');
                 document.getElementById('generateWordBtn').disabled = true;
             }
+            saveSessionState();
             console.log('Starting game with mode:', gameMode, 'language:', languageMode, 'players:', Object.keys(players), 'available words:', availableWords.length);
             generateWord(true); // Generate initial word
         }
@@ -511,6 +599,7 @@
             if (success) {
                 feedback.textContent = 'Word list refreshed! Return to Game tab to continue.';
                 feedback.className = 'green fade-in';
+                document.getElementById('resetUsedWordsBtn').classList.add('hidden');
                 generateWord(true); // Generate new word after refresh
             }
         }
@@ -528,6 +617,7 @@
             });
             playerSelect.value = previousValue && players[previousValue] ? previousValue : '';
             enableGenerateButton();
+            saveSessionState();
         }
 
         function updateRemovePlayerSelect() {
@@ -551,6 +641,7 @@
                 li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')"><i class="fas fa-plus"></i></button><button class="score-btn" onclick="decrementScore('${name}')"><i class="fas fa-minus"></i></button>`;
                 leaderboardList.appendChild(li);
             });
+            saveSessionState();
         }
 
         function incrementScore(player) {
@@ -596,10 +687,22 @@
             generateBtn.disabled = !player;
         }
 
+        function resetUsedWords() {
+            usedWords = { english: [], malay: [] };
+            document.getElementById('resetUsedWordsBtn').classList.add('hidden');
+            document.getElementById('feedback').textContent = 'Used words reset! New words available.';
+            document.getElementById('feedback').className = 'green fade-in';
+            document.getElementById('generateWordBtn').disabled = gameMode === 'regular' && !document.getElementById('playerSelect').value;
+            saveSessionState();
+            generateWord(true); // Generate a new word
+            console.log('Used words reset');
+        }
+
         function generateWord(initial = false) {
             const player = document.getElementById('playerSelect').value;
             const feedback = document.getElementById('feedback');
             const generateBtn = document.getElementById('generateWordBtn');
+            const resetUsedWordsBtn = document.getElementById('resetUsedWordsBtn');
 
             if (gameMode === 'regular' && !initial && !player) {
                 feedback.textContent = 'Please select a player to generate a new word.';
@@ -618,20 +721,28 @@
             }
 
             let lang = languageMode;
+            let wordList = [];
             if (languageMode === 'both') {
                 lang = useEnglish ? 'en' : 'ms';
+                wordList = lang === 'en' ? wordLists.english : wordLists.malay;
                 useEnglish = !useEnglish;
+            } else {
+                wordList = languageMode === 'en' ? wordLists.english : wordLists.malay;
             }
-            const wordList = lang === 'en' ? wordLists.english : wordLists.malay;
-            if (wordList.length === 0) {
-                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+
+            const availableWords = wordList.filter(word => !usedWords[lang].includes(word));
+            if (availableWords.length === 0) {
+                document.getElementById('wordDisplay').textContent = 'No more words available.';
                 document.getElementById('wordDisplay').classList.add('fade-in');
-                document.getElementById('feedback').textContent = `No ${lang === 'en' ? 'English' : 'Malay'} words available. Add words to the Google Sheet and click "Refresh Word List" in Settings (Regular Mode only).`;
-                document.getElementById('feedback').className = 'red fade-in';
+                feedback.textContent = `No more ${lang === 'en' ? 'English' : 'Malay'} words available. Reset used words or refresh the word list in Settings (Regular Mode only).`;
+                feedback.className = 'red fade-in';
+                resetUsedWordsBtn.classList.remove('hidden');
                 if (gameMode === 'regular') generateBtn.disabled = true;
                 return;
             }
-            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+
+            currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            usedWords[lang].push(currentWord);
             document.getElementById('wordDisplay').textContent = currentWord;
             document.getElementById('wordDisplay').classList.add('fade-in');
             if (gameMode === 'regular' && !initial) {
@@ -642,33 +753,43 @@
                 generateBtn.disabled = false; // Always enabled in casual mode
             }
             updateLeaderboard();
-            console.log('Generated word:', currentWord, 'for language:', lang);
+            saveSessionState();
+            console.log('Generated word:', currentWord, 'for language:', lang, 'used words:', usedWords[lang].length);
         }
 
         function skipWord() {
             if (gameMode === 'casual') return; // Disabled in casual mode
             let wordList;
+            let lang;
             if (languageMode === 'both') {
-                wordList = Math.random() < 0.5 ? wordLists.english : wordLists.malay;
+                lang = Math.random() < 0.5 ? 'en' : 'ms';
+                wordList = lang === 'en' ? wordLists.english : wordLists.malay;
             } else {
+                lang = languageMode;
                 wordList = languageMode === 'en' ? wordLists.english : wordLists.malay;
             }
-            if (wordList.length === 0) {
-                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
+            const availableWords = wordList.filter(word => !usedWords[lang].includes(word));
+            const feedback = document.getElementById('feedback');
+            const resetUsedWordsBtn = document.getElementById('resetUsedWordsBtn');
+            if (availableWords.length === 0) {
+                document.getElementById('wordDisplay').textContent = 'No more words available.';
                 document.getElementById('wordDisplay').classList.add('fade-in');
-                document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings.`;
-                document.getElementById('feedback').className = 'red fade-in';
+                feedback.textContent = `No more ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : lang === 'en' ? 'English' : 'Malay'} words available. Reset used words or refresh the word list in Settings.`;
+                feedback.className = 'red fade-in';
                 document.getElementById('generateWordBtn').disabled = true;
+                resetUsedWordsBtn.classList.remove('hidden');
                 return;
             }
-            currentWord = wordList[Math.floor(Math.random() * wordList.length)];
+            currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+            usedWords[lang].push(currentWord);
             document.getElementById('wordDisplay').textContent = currentWord;
             document.getElementById('wordDisplay').classList.add('fade-in');
             document.getElementById('playerSelect').value = '';
             document.getElementById('generateWordBtn').disabled = true;
-            document.getElementById('feedback').textContent = 'Word skipped! New word generated.';
-            document.getElementById('feedback').className = 'green fade-in';
-            console.log('Skipped to word:', currentWord);
+            feedback.textContent = 'Word skipped! New word generated.';
+            feedback.className = 'green fade-in';
+            saveSessionState();
+            console.log('Skipped to word:', currentWord, 'for language:', lang, 'used words:', usedWords[lang].length);
         }
 
         function addPlayer() {
@@ -716,6 +837,7 @@
             useEnglish = true; // Reset alternation for "Both" mode
             document.getElementById('feedback').textContent = `Language changed to ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'Both'}.`;
             document.getElementById('feedback').className = 'green fade-in';
+            document.getElementById('resetUsedWordsBtn').classList.add('hidden');
             generateWord(true); // Generate new word on language change
         }
     </script>
