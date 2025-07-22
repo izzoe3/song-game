@@ -6,6 +6,15 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00d4ff">
+    <meta name="description" content="Play the Song Association Game! Sing songs matching random words in English or Malay. Works offline, with Casual and Regular modes.">
+    <meta property="og:title" content="Song Association Game">
+    <meta property="og:description" content="A fun PWA to sing songs matching random words in English or Malay. Play offline in Casual or Regular mode!">
+    <meta property="og:image" content="https://izzoe3.github.io/song-game/icons/icon-512.png">
+    <meta property="og:url" content="https://izzoe3.github.io/song-game/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Song Association Game">
+    <meta name="twitter:description" content="Sing songs matching random words! Play offline in English or Malay.">
+    <meta name="twitter:image" content="https://izzoe3.github.io/song-game/icons/icon-512.png">
     <title>Song Association Game</title>
     <link rel="manifest" href="/song-game/manifest.json">
     <link rel="apple-touch-icon" href="/song-game/icons/icon-192.png">
@@ -23,6 +32,11 @@
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.light-mode {
+            background: linear-gradient(45deg, #f0f0f5, #e0e0ff);
+            color: #333;
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -40,6 +54,11 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             z-index: 1000;
         }
+        .header.light-mode {
+            background: #fff;
+            color: #333;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
         .header h1 {
             font-size: 1.5rem;
             margin: 0;
@@ -52,6 +71,10 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             padding: 20px;
             margin: 70px 10px 20px;
+        }
+        .container.light-mode {
+            background: linear-gradient(145deg, #ffffff, #e6e6fa);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
         .tabs {
             display: flex;
@@ -70,6 +93,10 @@
             cursor: pointer;
             transition: transform 0.2s, background 0.3s;
         }
+        .tab-button.light-mode {
+            background: #d0d0ff;
+            color: #333;
+        }
         .tab-button.active {
             background: linear-gradient(45deg, #00d4ff, #ff007a);
             color: #fff;
@@ -84,6 +111,9 @@
             text-align: center;
             margin: 10px 0;
         }
+        h1.light-mode {
+            color: #333;
+        }
         select, button, input {
             margin: 10px auto;
             padding: 15px;
@@ -97,6 +127,10 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
         }
+        .light-mode select, .light-mode button, .light-mode input {
+            background: #f0f0f5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
         button:focus, select:focus, input:focus {
             outline: 2px solid #00d4ff;
             outline-offset: 2px;
@@ -109,9 +143,6 @@
             min-height: 60px;
             position: relative;
             overflow: hidden;
-        }
-        button:hover, button:active {
-            transform: scale(1.05);
         }
         button:disabled {
             background: #666;
@@ -147,6 +178,11 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
+        #wordDisplay.light-mode {
+            background: #ffffff;
+            color: #007bff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
         #wordCountDisplay {
             font-size: 1rem;
             font-weight: 500;
@@ -154,17 +190,23 @@
             text-align: center;
             margin-top: 10px;
         }
-        #feedback {
+        #wordCountDisplay.light-mode {
+            color: #333;
+        }
+        #feedback, #feedbackSettings {
             margin-top: 10px;
             font-size: 1rem;
             font-weight: 500;
             text-align: center;
             color: #fff;
         }
-        #feedback.green {
+        #feedback.light-mode, #feedbackSettings.light-mode {
+            color: #333;
+        }
+        #feedback.green, #feedbackSettings.green {
             color: #00ff85;
         }
-        #feedback.red {
+        #feedback.red, #feedbackSettings.red {
             color: #ff4d4d;
         }
         .fade-in {
@@ -184,6 +226,9 @@
             margin-bottom: 10px;
             color: #fff;
         }
+        #leaderboard h2.light-mode {
+            color: #333;
+        }
         #leaderboard ul {
             list-style: none;
             padding: 0;
@@ -195,6 +240,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+        }
+        #leaderboard li.light-mode {
+            color: #333;
         }
         .modal {
             display: none;
@@ -208,6 +256,9 @@
             justify-content: center;
             z-index: 1000;
         }
+        .modal.light-mode {
+            background: rgba(255, 255, 255, 0.7);
+        }
         .modal-content {
             background: #2c2c54;
             padding: 20px;
@@ -217,6 +268,10 @@
             text-align: center;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             animation: slideIn 0.3s ease-out;
+        }
+        .modal-content.light-mode {
+            background: #ffffff;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
         @keyframes slideIn {
             from { transform: translateY(-50px); opacity: 0; }
@@ -231,6 +286,9 @@
             color: #fff;
             font-size: 0.9rem;
         }
+        .modal-content p.light-mode {
+            color: #333;
+        }
         .hidden {
             display: none;
         }
@@ -242,6 +300,29 @@
             font-size: 0.8rem;
             opacity: 0.7;
             z-index: 1000;
+        }
+        .app-version.light-mode {
+            color: #333;
+        }
+        .update-notice {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #ff007a;
+            color: #fff;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            z-index: 1001;
+            display: none;
+        }
+        .update-notice.light-mode {
+            background: #007bff;
+            color: #fff;
+        }
+        #qrCode {
+            margin: 20px auto;
+            max-width: 150px;
         }
         @media (max-width: 480px) {
             .header h1 {
@@ -268,12 +349,25 @@
             .app-version {
                 font-size: 0.7rem;
             }
+            .update-notice {
+                font-size: 0.8rem;
+                padding: 8px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>Song Association Game</h1>
+    </div>
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Song Association Game!</h2>
+            <p>Sing songs containing randomly generated words in English or Malay. Choose <strong>Casual Mode</strong> for a relaxed word generator or <strong>Regular Mode</strong> for competitive play with scoring and a leaderboard. Works offline after initial load!</p>
+            <button onclick="showModeModal()" aria-label="Get started with the game"><i class="fas fa-play"></i> Get Started</button>
+            <button onclick="shareApp()" aria-label="Share the game"><i class="fas fa-share-alt"></i> Share Game</button>
+            <img id="qrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://izzoe3.github.io/song-game/" alt="QR code to share game">
+        </div>
     </div>
     <div id="modeModal" class="modal">
         <div class="modal-content">
@@ -292,7 +386,7 @@
                 <option value="ms">Malay</option>
                 <option value="both">Both</option>
             </select>
-            <p>Words are loaded from a Google Sheet. Add new words there and click "Refresh Word List" in Settings (Regular Mode only).</p>
+            <p>Words are loaded from a default word list. To use your own word list, add a Google Sheet URL in Settings (Regular Mode only).</p>
             <button onclick="startGame()" aria-label="Start the game"><i class="fas fa-play"></i> Start Game</button>
         </div>
     </div>
@@ -317,6 +411,7 @@
             </select>
             <button id="generateWordBtn" onclick="generateWord()" aria-label="Generate a new word"><i class="fas fa-sync-alt"></i> Generate New Word</button>
             <button id="skipWordBtn" onclick="skipWord()" aria-label="Skip to next word"><i class="fas fa-forward"></i> Skip Word</button>
+            <button id="shareBtn" onclick="shareApp()" aria-label="Share the game"><i class="fas fa-share-alt"></i> Share Game</button>
             <button id="resetUsedWordsBtn" onclick="resetUsedWords()" class="hidden" aria-label="Reset used words"><i class="fas fa-undo"></i> Reset Used Words</button>
             <button id="resetModeBtn" onclick="resetGame()" class="hidden" aria-label="Reset game and change mode"><i class="fas fa-redo"></i> Reset/Change Mode</button>
             <select id="languageChangeSelect" onchange="changeLanguage()" aria-label="Change language for words">
@@ -329,13 +424,16 @@
         </div>
         <div id="settingsTab" class="tab-content" style="display: none;">
             <h1>Settings</h1>
+            <button onclick="toggleTheme()" aria-label="Toggle between light and dark theme"><i class="fas fa-moon"></i> Toggle Theme</button>
             <input type="text" id="addPlayerInput" placeholder="Enter new player name" aria-label="Enter new player name">
             <button onclick="addPlayer()" aria-label="Add a new player"><i class="fas fa-user-plus"></i> Add Player</button>
             <select id="removePlayerSelect" aria-label="Select player to remove">
                 <option value="">Select Player to Remove</option>
             </select>
             <button onclick="removePlayer()" aria-label="Remove selected player"><i class="fas fa-user-minus"></i> Remove Player</button>
-            <button onclick="refreshWordList()" aria-label="Refresh word list from Google Sheet"><i class="fas fa-sync"></i> Refresh Word List</button>
+            <input type="url" id="customSheetUrl" placeholder="Enter custom Google Sheet CSV URL" aria-label="Enter custom Google Sheet CSV URL">
+            <button onclick="saveCustomSheetUrl()" aria-label="Save custom Google Sheet URL"><i class="fas fa-save"></i> Save Sheet URL</button>
+            <button onclick="refreshWordList()" aria-label="Refresh word list from current sheet"><i class="fas fa-sync"></i> Refresh Word List</button>
             <button onclick="resetGame()" aria-label="Reset game, clearing all data"><i class="fas fa-redo"></i> Reset Game</button>
             <button id="toggleLeaderboard" onclick="toggleLeaderboard()" aria-label="Toggle leaderboard visibility"><i class="fas fa-trophy"></i> Show Leaderboard</button>
             <div id="leaderboard">
@@ -345,7 +443,8 @@
             <div id="feedbackSettings"></div>
         </div>
     </div>
-    <div class="app-version">App Version: 1.2.0</div>
+    <div class="app-version">App Version: 1.3.0</div>
+    <div id="updateNotice" class="update-notice">New version available! Refresh to update.</div>
 
     <script>
         let players = {};
@@ -354,11 +453,16 @@
         let useEnglish = true;
         let gameMode = 'regular';
         let usedWords = { english: [], malay: [] };
-        const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+        const defaultSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
+        let currentSheetUrl = defaultSheetUrl;
         let wordLists = { english: [], malay: [] };
+        const APP_VERSION = '1.3.0';
 
         window.addEventListener('load', () => {
             loadSessionState();
+            applyTheme();
+            checkForUpdates();
+            loadCustomSheetUrl();
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/song-game/sw.js')
                     .then(reg => console.log('Service Worker registered:', reg))
@@ -380,7 +484,9 @@
                 gameMode,
                 languageMode,
                 useEnglish,
-                currentWord
+                currentWord,
+                currentSheetUrl,
+                appVersion: APP_VERSION
             };
             localStorage.setItem('songGameState', JSON.stringify(state));
             console.log('Session state saved:', state);
@@ -396,7 +502,9 @@
                 languageMode = parsed.languageMode || 'en';
                 useEnglish = parsed.useEnglish !== undefined ? parsed.useEnglish : true;
                 currentWord = parsed.currentWord || '';
+                currentSheetUrl = parsed.currentSheetUrl || defaultSheetUrl;
                 console.log('Session state loaded:', parsed);
+                document.getElementById('welcomeModal').style.display = 'none';
                 document.getElementById('modeModal').style.display = 'none';
                 document.getElementById('playerModal').style.display = 'none';
                 document.getElementById('resetModal').style.display = 'none';
@@ -404,6 +512,7 @@
                 document.getElementById('settingsTab').style.display = 'none';
                 document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
                 document.getElementById('languageChangeSelect').value = languageMode;
+                document.getElementById('customSheetUrl').value = currentSheetUrl;
                 document.getElementById('wordDisplay').textContent = currentWord || 'Loading...';
                 if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
                 if (gameMode === 'casual') {
@@ -439,9 +548,99 @@
                     updateWordCount();
                 }
             } else {
-                document.getElementById('modeModal').style.display = 'flex';
+                document.getElementById('welcomeModal').style.display = 'flex';
                 document.getElementById('leaderboard').style.display = 'none';
                 document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+            }
+        }
+
+        function loadCustomSheetUrl() {
+            const savedUrl = localStorage.getItem('customSheetUrl');
+            if (savedUrl) {
+                currentSheetUrl = savedUrl;
+                document.getElementById('customSheetUrl').value = savedUrl;
+            }
+        }
+
+        function saveCustomSheetUrl() {
+            const newUrl = document.getElementById('customSheetUrl').value.trim();
+            const feedback = document.getElementById('feedbackSettings');
+            if (!newUrl) {
+                currentSheetUrl = defaultSheetUrl;
+                localStorage.removeItem('customSheetUrl');
+                document.getElementById('customSheetUrl').value = '';
+                feedback.textContent = 'Reverted to default word list.';
+                feedback.className = 'green fade-in';
+                refreshWordList();
+                return;
+            }
+            if (!newUrl.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/.*\/pub\?output=csv$/)) {
+                feedback.textContent = 'Invalid Google Sheet URL. Use a public CSV link (File > Share > Publish to web > Comma-separated values).';
+                feedback.className = 'red fade-in';
+                return;
+            }
+            currentSheetUrl = newUrl;
+            localStorage.setItem('customSheetUrl', newUrl);
+            feedback.textContent = 'Custom sheet URL saved! Refreshing word list...';
+            feedback.className = 'green fade-in';
+            refreshWordList();
+        }
+
+        function applyTheme() {
+            const theme = localStorage.getItem('theme') || 'dark';
+            document.body.classList.toggle('light-mode', theme === 'light');
+            document.querySelectorAll('.header, .container, .tab-button, h1, #wordDisplay, #wordCountDisplay, #feedback, #feedbackSettings, #leaderboard h2, #leaderboard li, .modal, .modal-content, .modal-content p, .app-version, .update-notice').forEach(el => {
+                el.classList.toggle('light-mode', theme === 'light');
+            });
+            const themeBtn = document.querySelector('button[onclick="toggleTheme()"]');
+            if (themeBtn) {
+                themeBtn.innerHTML = theme === 'light' ? '<i class="fas fa-moon"></i> Dark Theme' : '<i class="fas fa-sun"></i> Light Theme';
+            }
+        }
+
+        function toggleTheme() {
+            const theme = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+            applyTheme();
+        }
+
+        function showModeModal() {
+            document.getElementById('welcomeModal').style.display = 'none';
+            document.getElementById('modeModal').style.display = 'flex';
+        }
+
+        async function checkForUpdates() {
+            try {
+                const response = await fetch('/song-game/version.txt');
+                const serverVersion = await response.text();
+                if (serverVersion.trim() !== APP_VERSION) {
+                    document.getElementById('updateNotice').style.display = 'block';
+                    document.getElementById('updateNotice').onclick = () => location.reload();
+                }
+            } catch (e) {
+                console.log('Version check failed:', e);
+            }
+        }
+
+        async function shareApp() {
+            const shareData = {
+                title: 'Song Association Game',
+                text: 'Sing songs matching random words in English or Malay! Play offline with friends.',
+                url: 'https://izzoe3.github.io/song-game/'
+            };
+            try {
+                if (navigator.share) {
+                    await navigator.share(shareData);
+                    document.getElementById('feedback').textContent = 'Game shared successfully!';
+                    document.getElementById('feedback').className = 'green fade-in';
+                } else {
+                    navigator.clipboard.writeText(shareData.url);
+                    document.getElementById('feedback').textContent = 'Link copied to clipboard!';
+                    document.getElementById('feedback').className = 'green fade-in';
+                }
+            } catch (err) {
+                document.getElementById('feedback').textContent = 'Failed to share. Copy this link: ' + shareData.url;
+                document.getElementById('feedback').className = 'red fade-in';
             }
         }
 
@@ -494,6 +693,9 @@
             currentWord = '';
             languageMode = 'en';
             useEnglish = true;
+            currentSheetUrl = defaultSheetUrl;
+            localStorage.removeItem('customSheetUrl');
+            document.getElementById('customSheetUrl').value = '';
             document.getElementById('wordDisplay').textContent = '';
             document.getElementById('wordDisplay').classList.remove('fade-in');
             document.getElementById('feedback').textContent = '';
@@ -503,7 +705,7 @@
             document.getElementById('leaderboardList').innerHTML = '';
             document.getElementById('gameTab').style.display = 'none';
             document.getElementById('settingsTab').style.display = 'none';
-            document.getElementById('modeModal').style.display = 'flex';
+            document.getElementById('welcomeModal').style.display = 'flex';
             document.getElementById('settingsTabButton').classList.remove('hidden');
             document.getElementById('playerSelect').classList.remove('hidden');
             document.getElementById('skipWordBtn').classList.remove('hidden');
@@ -516,7 +718,7 @@
             document.getElementById('feedbackSettings').className = 'green fade-in';
             localStorage.removeItem('songGameState');
             updateWordCount();
-            console.log('Game reset, showing mode selection');
+            console.log('Game reset, showing welcome screen');
         }
 
         function showTab(tabName) {
@@ -561,20 +763,20 @@
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error('Fetch timeout: Unable to load words within 10 seconds')), 10000);
                 });
-                const fetchPromise = fetch(sheetUrl);
+                const fetchPromise = fetch(currentSheetUrl);
                 const response = await Promise.race([fetchPromise, timeoutPromise]);
-                if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch Google Sheet`);
+                if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch word list`);
                 const csvText = await response.text();
                 const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
                 const headers = rows[0].map(header => header.toLowerCase());
                 const malayCol = headers.indexOf('malay');
                 const englishCol = headers.indexOf('english');
-                if (malayCol === -1 || englishCol === -1) throw new Error('Headers "Malay" or "English" not found in Google Sheet');
+                if (malayCol === -1 || englishCol === -1) throw new Error('Headers "Malay" or "English" not found in word list');
                 wordLists.malay = rows.slice(1).map(row => row[malayCol]).filter(word => word && word !== '');
                 wordLists.english = rows.slice(1).map(row => row[englishCol]).filter(word => word && word !== '');
                 console.log('Fetched words:', { english: wordLists.english.length, malay: wordLists.malay.length });
                 if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
-                    throw new Error('No valid words found in the Google Sheet');
+                    throw new Error('No valid words found in the word list');
                 }
                 localStorage.setItem('songGameWords', JSON.stringify({ english: wordLists.english, malay: wordLists.malay }));
                 usedWords = { english: [], malay: [] };
@@ -591,85 +793,24 @@
                     wordLists.english = english || [];
                     wordLists.malay = malay || [];
                     if (wordLists.english.length || wordLists.malay.length) {
-                        feedback.textContent = 'Error fetching words, using cached word list.';
+                        feedback.textContent = 'Error fetching words, using cached word list. Retry in Settings.';
                         feedback.className = 'green fade-in';
+                        const retryBtn = document.createElement('button');
+                        retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Now';
+                        retryBtn.onclick = refreshWordList;
+                        feedback.appendChild(retryBtn);
                         updateWordCount();
                         return true;
                     }
                 }
-                feedback.textContent = 'Error: Could not load Google Sheet. Ensure it’s published as CSV and set to "Anyone with the link" (Viewer).';
+                feedback.textContent = 'Error: Could not load word list. Ensure the Google Sheet is public (CSV, “Anyone with the link”). Retry in Settings.';
                 feedback.className = 'red fade-in';
+                const retryBtn = document.createElement('button');
+                retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Now';
+                retryBtn.onclick = refreshWordList;
+                feedback.appendChild(retryBtn);
                 return false;
             }
-        }
-
-        async function startGame() {
-            players = {};
-            wordLists = { english: [], malay: [] };
-            usedWords = { english: [], malay: [] };
-            currentWord = '';
-            languageMode = document.getElementById('languageSelect').value;
-            if (gameMode === 'regular') {
-                const playerInput = document.getElementById('playerInput').value.trim();
-                if (!playerInput) {
-                    alert('Please enter at least one player name.');
-                    return;
-                }
-                const playerNames = playerInput.split(',').map(name => name.trim()).filter(name => name);
-                if (playerNames.length === 0) {
-                    alert('Please enter valid player names.');
-                    return;
-                }
-                playerNames.forEach(name => {
-                    players[name] = 0;
-                });
-            }
-            document.getElementById('wordDisplay').textContent = 'Loading words...';
-            document.getElementById('wordDisplay').classList.remove('fade-in');
-            document.getElementById('feedback').textContent = '';
-            document.getElementById('feedback').classList.remove('fade-in');
-            document.getElementById('resetUsedWordsBtn').classList.add('hidden');
-            const wordsLoaded = await fetchWords();
-            if (!wordsLoaded) {
-                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
-                document.getElementById('wordDisplay').classList.add('fade-in');
-                document.getElementById('feedback').textContent = 'No words available. Add words to the Google Sheet and click "Refresh Word List" in Settings (Regular Mode only).';
-                document.getElementById('feedback').classList.add('fade-in');
-                document.getElementById('feedback').className = 'red';
-                return;
-            }
-            const availableWords = languageMode === 'en' ? wordLists.english : languageMode === 'ms' ? wordLists.malay : [...wordLists.english, ...wordLists.malay];
-            if (availableWords.length === 0) {
-                document.getElementById('wordDisplay').textContent = 'Error: No words available.';
-                document.getElementById('wordDisplay').classList.add('fade-in');
-                document.getElementById('feedback').textContent = `No ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'words'} available. Add words to the Google Sheet and click "Refresh Word List" in Settings (Regular Mode only).`;
-                document.getElementById('feedback').classList.add('fade-in');
-                document.getElementById('feedback').className = 'red';
-                return;
-            }
-            updatePlayerSelect();
-            updateRemovePlayerSelect();
-            updateLeaderboard();
-            document.getElementById('languageChangeSelect').value = languageMode;
-            document.getElementById('playerModal').style.display = 'none';
-            document.getElementById('gameTab').style.display = 'block';
-            if (gameMode === 'casual') {
-                document.getElementById('settingsTabButton').classList.add('hidden');
-                document.getElementById('playerSelect').classList.add('hidden');
-                document.getElementById('skipWordBtn').classList.add('hidden');
-                document.getElementById('resetModeBtn').classList.remove('hidden');
-                document.getElementById('generateWordBtn').disabled = false;
-            } else {
-                document.getElementById('settingsTabButton').classList.remove('hidden');
-                document.getElementById('playerSelect').classList.remove('hidden');
-                document.getElementById('skipWordBtn').classList.remove('hidden');
-                document.getElementById('resetModeBtn').classList.add('hidden');
-                document.getElementById('generateWordBtn').disabled = true;
-            }
-            saveSessionState();
-            generateWord(true);
-            updateWordCount();
-            console.log('Starting game with mode:', gameMode, 'language:', languageMode, 'players:', Object.keys(players), 'available words:', availableWords.length);
         }
 
         async function refreshWordList() {
