@@ -1,21 +1,42 @@
-const CACHE_NAME = 'song-game-v8';
+const CACHE_NAME = 'song-game-v9';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv'
+  '/song-game/index.html',
+  '/song-game/manifest.json',
+  '/song-game/icons/icon-192.png'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return Promise.all(
+        urlsToCache.map(url => {
+          return fetch(url, { mode: 'no-cors' })
+            .then(response => {
+              if (!response.ok && response.type !== 'opaque') {
+                console.warn(`Failed to cache ${url}: ${response.status}`);
+                return null; // Skip failed requests
+              }
+              return cache.put(url, response);
+            })
+            .catch(err => {
+              console.warn(`Error caching ${url}: ${err.message}`);
+              return null; // Skip errors
+            });
+        })
+      ).then(() => self.skipWaiting());
+    })
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request).catch(() => {
+        console.warn(`Fetch failed for ${event.request.url}`);
+        return caches.match('/song-game/index.html'); // Fallback to index.html
+      });
+    })
   );
 });
 
@@ -30,6 +51,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#00d4ff">
     <title>Song Association Game</title>
@@ -136,12 +136,7 @@
             font-size: 2.5rem;
             font-weight: 700;
             color: #00d4ff;
-            margin: 30px 0;
-            text-align: center;
-            padding: 20px;
-            background: #2c2c54;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            display:block;
         }
         #feedback {
             margin-top: 10px;
@@ -222,6 +217,15 @@
         .hidden {
             display: none;
         }
+        .app-version {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            z-index: 1000;
+        }
         @media (max-width: 480px) {
             .header h1 {
                 font-size: 1.2rem;
@@ -243,6 +247,9 @@
             button.score-btn {
                 width: 40px;
                 font-size: 0.8rem;
+            }
+            .app-version {
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -312,6 +319,7 @@
         </div>
     </div>
     <div class="app-version">App Version: 1.2.0</div>
+
     <script>
         let players = {};
         let currentWord = '';
@@ -722,19 +730,23 @@
 
             let lang = languageMode;
             let wordList = [];
+            let usedWordsKey = '';
             if (languageMode === 'both') {
                 lang = useEnglish ? 'en' : 'ms';
-                wordList = lang === 'en' ? wordLists.english : wordLists.malay;
+                usedWordsKey = useEnglish ? 'english' : 'malay';
+                wordList = useEnglish ? wordLists.english : wordLists.malay;
                 useEnglish = !useEnglish;
             } else {
+                lang = languageMode;
+                usedWordsKey = languageMode === 'en' ? 'english' : 'malay';
                 wordList = languageMode === 'en' ? wordLists.english : wordLists.malay;
             }
 
-            const availableWords = wordList.filter(word => !usedWords[lang].includes(word));
+            const availableWords = wordList.filter(word => !usedWords[usedWordsKey].includes(word));
             if (availableWords.length === 0) {
                 document.getElementById('wordDisplay').textContent = 'No more words available.';
                 document.getElementById('wordDisplay').classList.add('fade-in');
-                feedback.textContent = `No more ${lang === 'en' ? 'English' : 'Malay'} words available. Reset used words or refresh the word list in Settings (Regular Mode only).`;
+                feedback.textContent = `No more ${usedWordsKey === 'english' ? 'English' : 'Malay'} words available. Reset used words or refresh the word list in Settings (Regular Mode only).`;
                 feedback.className = 'red fade-in';
                 resetUsedWordsBtn.classList.remove('hidden');
                 if (gameMode === 'regular') generateBtn.disabled = true;
@@ -742,7 +754,7 @@
             }
 
             currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-            usedWords[lang].push(currentWord);
+            usedWords[usedWordsKey].push(currentWord);
             document.getElementById('wordDisplay').textContent = currentWord;
             document.getElementById('wordDisplay').classList.add('fade-in');
             if (gameMode === 'regular' && !initial) {
@@ -754,34 +766,37 @@
             }
             updateLeaderboard();
             saveSessionState();
-            console.log('Generated word:', currentWord, 'for language:', lang, 'used words:', usedWords[lang].length);
+            console.log('Generated word:', currentWord, 'for language:', lang, 'used words:', usedWords[usedWordsKey].length);
         }
 
         function skipWord() {
             if (gameMode === 'casual') return; // Disabled in casual mode
             let wordList;
             let lang;
+            let usedWordsKey;
             if (languageMode === 'both') {
                 lang = Math.random() < 0.5 ? 'en' : 'ms';
+                usedWordsKey = lang === 'en' ? 'english' : 'malay';
                 wordList = lang === 'en' ? wordLists.english : wordLists.malay;
             } else {
                 lang = languageMode;
+                usedWordsKey = languageMode === 'en' ? 'english' : 'malay';
                 wordList = languageMode === 'en' ? wordLists.english : wordLists.malay;
             }
-            const availableWords = wordList.filter(word => !usedWords[lang].includes(word));
+            const availableWords = wordList.filter(word => !usedWords[usedWordsKey].includes(word));
             const feedback = document.getElementById('feedback');
             const resetUsedWordsBtn = document.getElementById('resetUsedWordsBtn');
             if (availableWords.length === 0) {
                 document.getElementById('wordDisplay').textContent = 'No more words available.';
                 document.getElementById('wordDisplay').classList.add('fade-in');
-                feedback.textContent = `No more ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : lang === 'en' ? 'English' : 'Malay'} words available. Reset used words or refresh the word list in Settings.`;
+                feedback.textContent = `No more ${usedWordsKey === 'english' ? 'English' : 'Malay'} words available. Reset used words or refresh the word list in Settings.`;
                 feedback.className = 'red fade-in';
                 document.getElementById('generateWordBtn').disabled = true;
                 resetUsedWordsBtn.classList.remove('hidden');
                 return;
             }
             currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-            usedWords[lang].push(currentWord);
+            usedWords[usedWordsKey].push(currentWord);
             document.getElementById('wordDisplay').textContent = currentWord;
             document.getElementById('wordDisplay').classList.add('fade-in');
             document.getElementById('playerSelect').value = '';
@@ -789,7 +804,7 @@
             feedback.textContent = 'Word skipped! New word generated.';
             feedback.className = 'green fade-in';
             saveSessionState();
-            console.log('Skipped to word:', currentWord, 'for language:', lang, 'used words:', usedWords[lang].length);
+            console.log('Skipped to word:', currentWord, 'for language:', lang, 'used words:', usedWords[usedWordsKey].length);
         }
 
         function addPlayer() {
