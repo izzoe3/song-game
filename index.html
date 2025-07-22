@@ -32,11 +32,7 @@
             flex-direction: column;
             align-items: center;
             overflow-x: hidden;
-            transition: background 0.3s, color 0.3s;
-        }
-        body.light-mode {
-            background: linear-gradient(45deg, #f0f0f5, #e0e0ff);
-            color: #333;
+            color: #fff;
         }
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
@@ -54,11 +50,6 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
             z-index: 1000;
         }
-        .header.light-mode {
-            background: #fff;
-            color: #333;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
         .header h1 {
             font-size: 1.5rem;
             margin: 0;
@@ -71,10 +62,6 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             padding: 20px;
             margin: 70px 10px 20px;
-        }
-        .container.light-mode {
-            background: linear-gradient(145deg, #ffffff, #e6e6fa);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
         .tabs {
             display: flex;
@@ -93,10 +80,6 @@
             cursor: pointer;
             transition: transform 0.2s, background 0.3s;
         }
-        .tab-button.light-mode {
-            background: #d0d0ff;
-            color: #333;
-        }
         .tab-button.active {
             background: linear-gradient(45deg, #00d4ff, #ff007a);
             color: #fff;
@@ -106,13 +89,9 @@
             background: #00b4d8;
         }
         h1 {
-            color: #fff;
             font-size: 1.6rem;
             text-align: center;
             margin: 10px 0;
-        }
-        h1.light-mode {
-            color: #333;
         }
         select, button, input {
             margin: 10px auto;
@@ -126,10 +105,7 @@
             background: #fff;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
-        }
-        .light-mode select, .light-mode button, .light-mode input {
-            background: #f0f0f5;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            color: #333;
         }
         button:focus, select:focus, input:focus {
             outline: 2px solid #00d4ff;
@@ -178,30 +154,17 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
-        #wordDisplay.light-mode {
-            background: #ffffff;
-            color: #007bff;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
         #wordCountDisplay {
             font-size: 1rem;
             font-weight: 500;
-            color: #fff;
             text-align: center;
             margin-top: 10px;
-        }
-        #wordCountDisplay.light-mode {
-            color: #333;
         }
         #feedback, #feedbackSettings {
             margin-top: 10px;
             font-size: 1rem;
             font-weight: 500;
             text-align: center;
-            color: #fff;
-        }
-        #feedback.light-mode, #feedbackSettings.light-mode {
-            color: #333;
         }
         #feedback.green, #feedbackSettings.green {
             color: #00ff85;
@@ -224,10 +187,6 @@
         #leaderboard h2 {
             font-size: 1.2rem;
             margin-bottom: 10px;
-            color: #fff;
-        }
-        #leaderboard h2.light-mode {
-            color: #333;
         }
         #leaderboard ul {
             list-style: none;
@@ -236,13 +195,9 @@
         #leaderboard li {
             font-size: 1rem;
             margin: 8px 0;
-            color: #fff;
             display: flex;
             align-items: center;
             justify-content: space-between;
-        }
-        #leaderboard li.light-mode {
-            color: #333;
         }
         .modal {
             display: none;
@@ -256,9 +211,6 @@
             justify-content: center;
             z-index: 1000;
         }
-        .modal.light-mode {
-            background: rgba(255, 255, 255, 0.7);
-        }
         .modal-content {
             background: #2c2c54;
             padding: 20px;
@@ -268,10 +220,6 @@
             text-align: center;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
             animation: slideIn 0.3s ease-out;
-        }
-        .modal-content.light-mode {
-            background: #ffffff;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
         }
         @keyframes slideIn {
             from { transform: translateY(-50px); opacity: 0; }
@@ -283,11 +231,7 @@
             box-sizing: border-box;
         }
         .modal-content p {
-            color: #fff;
             font-size: 0.9rem;
-        }
-        .modal-content p.light-mode {
-            color: #333;
         }
         .hidden {
             display: none;
@@ -296,13 +240,9 @@
             position: fixed;
             bottom: 10px;
             left: 10px;
-            color: #fff;
             font-size: 0.8rem;
             opacity: 0.7;
             z-index: 1000;
-        }
-        .app-version.light-mode {
-            color: #333;
         }
         .update-notice {
             position: fixed;
@@ -316,13 +256,26 @@
             z-index: 1001;
             display: none;
         }
-        .update-notice.light-mode {
-            background: #007bff;
-            color: #fff;
-        }
         #qrCode {
             margin: 20px auto;
             max-width: 150px;
+        }
+        fieldset {
+            border: 1px solid #00d4ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        legend {
+            font-weight: 700;
+            color: #00d4ff;
+            padding: 0 10px;
+        }
+        .settings-group {
+            margin-bottom: 20px;
+        }
+        .settings-group input, .settings-group select, .settings-group button {
+            margin: 8px 0;
         }
         @media (max-width: 480px) {
             .header h1 {
@@ -352,6 +305,12 @@
             .update-notice {
                 font-size: 0.8rem;
                 padding: 8px;
+            }
+            fieldset {
+                padding: 10px;
+            }
+            legend {
+                font-size: 0.9rem;
             }
         }
     </style>
@@ -424,18 +383,33 @@
         </div>
         <div id="settingsTab" class="tab-content" style="display: none;">
             <h1>Settings</h1>
-            <button onclick="toggleTheme()" aria-label="Toggle between light and dark theme"><i class="fas fa-moon"></i> Toggle Theme</button>
-            <input type="text" id="addPlayerInput" placeholder="Enter new player name" aria-label="Enter new player name">
-            <button onclick="addPlayer()" aria-label="Add a new player"><i class="fas fa-user-plus"></i> Add Player</button>
-            <select id="removePlayerSelect" aria-label="Select player to remove">
-                <option value="">Select Player to Remove</option>
-            </select>
-            <button onclick="removePlayer()" aria-label="Remove selected player"><i class="fas fa-user-minus"></i> Remove Player</button>
-            <input type="url" id="customSheetUrl" placeholder="Enter custom Google Sheet CSV URL" aria-label="Enter custom Google Sheet CSV URL">
-            <button onclick="saveCustomSheetUrl()" aria-label="Save custom Google Sheet URL"><i class="fas fa-save"></i> Save Sheet URL</button>
-            <button onclick="refreshWordList()" aria-label="Refresh word list from current sheet"><i class="fas fa-sync"></i> Refresh Word List</button>
-            <button onclick="resetGame()" aria-label="Reset game, clearing all data"><i class="fas fa-redo"></i> Reset Game</button>
-            <button id="toggleLeaderboard" onclick="toggleLeaderboard()" aria-label="Toggle leaderboard visibility"><i class="fas fa-trophy"></i> Show Leaderboard</button>
+            <div class="settings-group">
+                <fieldset>
+                    <legend>Player Management</legend>
+                    <input type="text" id="addPlayerInput" placeholder="Enter new player name" aria-label="Enter new player name">
+                    <button onclick="addPlayer()" aria-label="Add a new player"><i class="fas fa-user-plus"></i> Add Player</button>
+                    <select id="removePlayerSelect" aria-label="Select player to remove">
+                        <option value="">Select Player to Remove</option>
+                    </select>
+                    <button onclick="removePlayer()" aria-label="Remove selected player"><i class="fas fa-user-minus"></i> Remove Player</button>
+                </fieldset>
+            </div>
+            <div class="settings-group">
+                <fieldset>
+                    <legend>Word List Management</legend>
+                    <input type="url" id="customSheetUrl" placeholder="Enter custom Google Sheet CSV URL" aria-label="Enter custom Google Sheet CSV URL">
+                    <button onclick="saveCustomSheetUrl()" aria-label="Save custom Google Sheet URL"><i class="fas fa-save"></i> Save Sheet URL</button>
+                    <button onclick="useDefaultSheet()" aria-label="Use default word list"><i class="fas fa-undo"></i> Use Default Word List</button>
+                    <button onclick="refreshWordList()" aria-label="Refresh word list from current sheet"><i class="fas fa-sync"></i> Refresh Word List</button>
+                </fieldset>
+            </div>
+            <div class="settings-group">
+                <fieldset>
+                    <legend>Game Controls</legend>
+                    <button id="toggleLeaderboard" onclick="toggleLeaderboard()" aria-label="Toggle leaderboard visibility"><i class="fas fa-trophy"></i> Show Leaderboard</button>
+                    <button onclick="resetGame()" aria-label="Reset game, clearing all data"><i class="fas fa-redo"></i> Reset Game</button>
+                </fieldset>
+            </div>
             <div id="leaderboard">
                 <h2>Leaderboard</h2>
                 <ul id="leaderboardList"></ul>
@@ -460,7 +434,6 @@
 
         window.addEventListener('load', () => {
             loadSessionState();
-            applyTheme();
             checkForUpdates();
             loadCustomSheetUrl();
             if ('serviceWorker' in navigator) {
@@ -616,12 +589,8 @@
             const newUrl = document.getElementById('customSheetUrl').value.trim();
             const feedback = document.getElementById('feedbackSettings');
             if (!newUrl) {
-                currentSheetUrl = defaultSheetUrl;
-                localStorage.removeItem('customSheetUrl');
-                document.getElementById('customSheetUrl').value = '';
-                feedback.textContent = 'Reverted to default word list.';
-                feedback.className = 'green fade-in';
-                refreshWordList();
+                feedback.textContent = 'Please enter a valid Google Sheet CSV URL or use the default word list.';
+                feedback.className = 'red fade-in';
                 return;
             }
             if (!newUrl.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/.*\/pub\?output=csv$/)) {
@@ -631,27 +600,19 @@
             }
             currentSheetUrl = newUrl;
             localStorage.setItem('customSheetUrl', newUrl);
-            feedback.textContent = 'Custom sheet URL saved! Refreshing word list...';
+            feedback.textContent = 'Custom sheet URL saved! Refreshing word list from custom sheet...';
             feedback.className = 'green fade-in';
             refreshWordList();
         }
 
-        function applyTheme() {
-            const theme = localStorage.getItem('theme') || 'dark';
-            document.body.classList.toggle('light-mode', theme === 'light');
-            document.querySelectorAll('.header, .container, .tab-button, h1, #wordDisplay, #wordCountDisplay, #feedback, #feedbackSettings, #leaderboard h2, #leaderboard li, .modal, .modal-content, .modal-content p, .app-version, .update-notice').forEach(el => {
-                el.classList.toggle('light-mode', theme === 'light');
-            });
-            const themeBtn = document.querySelector('button[onclick="toggleTheme()"]');
-            if (themeBtn) {
-                themeBtn.innerHTML = theme === 'light' ? '<i class="fas fa-moon"></i> Dark Theme' : '<i class="fas fa-sun"></i> Light Theme';
-            }
-        }
-
-        function toggleTheme() {
-            const theme = localStorage.getItem('theme') === 'light' ? 'dark' : 'light';
-            localStorage.setItem('theme', theme);
-            applyTheme();
+        function useDefaultSheet() {
+            const feedback = document.getElementById('feedbackSettings');
+            currentSheetUrl = defaultSheetUrl;
+            localStorage.removeItem('customSheetUrl');
+            document.getElementById('customSheetUrl').value = '';
+            feedback.textContent = 'Reverted to default word list. Refreshing...';
+            feedback.className = 'green fade-in';
+            refreshWordList();
         }
 
         function showModeModal() {
@@ -835,7 +796,7 @@
                 localStorage.setItem('songGameWords', JSON.stringify({ english: wordLists.english, malay: wordLists.malay }));
                 usedWords = { english: [], malay: [] };
                 saveSessionState();
-                feedback.textContent = 'Word list loaded successfully!';
+                feedback.textContent = `Word list loaded successfully from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet!`;
                 feedback.className = 'green fade-in';
                 updateWordCount();
                 return true;
@@ -847,7 +808,7 @@
                     wordLists.english = english || [];
                     wordLists.malay = malay || [];
                     if (wordLists.english.length || wordLists.malay.length) {
-                        feedback.textContent = 'Error fetching words, using cached word list. Retry in Settings.';
+                        feedback.textContent = `Error fetching words, using cached word list from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet. Retry in Settings.`;
                         feedback.className = 'green fade-in';
                         const retryBtn = document.createElement('button');
                         retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Now';
@@ -870,11 +831,11 @@
         async function refreshWordList() {
             if (gameMode === 'casual') return;
             const feedback = document.getElementById('feedbackSettings');
-            feedback.textContent = 'Refreshing word list...';
+            feedback.textContent = `Refreshing word list from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet...`;
             feedback.className = 'fade-in';
             const success = await fetchWords();
             if (success) {
-                feedback.textContent = 'Word list refreshed! Return to Game tab to continue.';
+                feedback.textContent = `Word list refreshed from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet! Return to Game tab to continue.`;
                 feedback.className = 'green fade-in';
                 document.getElementById('resetUsedWordsBtn').classList.add('hidden');
                 generateWord(true);
