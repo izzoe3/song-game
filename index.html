@@ -197,20 +197,20 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        #leaderboard {
+        #leaderboard, #finalLeaderboard {
             margin-top: 20px;
             text-align: left;
             display: none;
         }
-        #leaderboard h2 {
+        #leaderboard h2, #finalLeaderboard h2 {
             font-size: 1.2rem;
             margin-bottom: 10px;
         }
-        #leaderboard ul {
+        #leaderboard ul, #finalLeaderboard ul {
             list-style: none;
             padding: 0;
         }
-        #leaderboard li {
+        #leaderboard li, #finalLeaderboard li {
             font-size: 1rem;
             margin: 8px 0;
             display: flex;
@@ -377,6 +377,17 @@
             <button onclick="confirmReset(false)" aria-label="Cancel game reset"><i class="fas fa-times"></i> Cancel</button>
         </div>
     </div>
+    <div id="endGameModal" class="modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <p>Final scores:</p>
+            <div id="finalLeaderboard">
+                <ul id="finalLeaderboardList"></ul>
+            </div>
+            <button onclick="startNewRegularGame()" aria-label="Start a new Regular Mode game"><i class="fas fa-users"></i> New Regular Game</button>
+            <button onclick="changeMode()" aria-label="Change game mode"><i class="fas fa-redo"></i> Change Mode</button>
+        </div>
+    </div>
     <div class="container">
         <div class="tabs">
             <button class="tab-button active" onclick="showTab('game')" aria-label="Show Game tab"><i class="fas fa-gamepad"></i> Game</button>
@@ -390,6 +401,7 @@
             </select>
             <button id="generateWordBtn" onclick="generateWord()" aria-label="Generate a new word"><i class="fas fa-sync-alt"></i> Generate New Word</button>
             <button id="skipWordBtn" onclick="skipWord()" aria-label="Skip to next word"><i class="fas fa-forward"></i> Skip Word</button>
+            <button id="endGameBtn" onclick="endGame()" aria-label="End the game and view scores" class="hidden"><i class="fas fa-flag-checkered"></i> End Game</button>
             <button id="shareBtn" onclick="shareApp()" aria-label="Share the game"><i class="fas fa-share-alt"></i> Share Game</button>
             <button id="resetUsedWordsBtn" onclick="resetUsedWords()" class="hidden" aria-label="Reset used words"><i class="fas fa-undo"></i> Reset Used Words</button>
             <button id="resetModeBtn" onclick="resetGame()" class="hidden" aria-label="Reset game and change mode"><i class="fas fa-redo"></i> Reset/Change Mode</button>
@@ -437,7 +449,7 @@
             <div id="feedbackSettings" role="status" aria-live="polite"></div>
         </div>
     </div>
-    <div class="app-version">App Version: 1.3.0</div>
+    <div class="app-version">App Version: 1.4.0</div>
     <div id="updateNotice" class="update-notice">New version available! Refresh to update.</div>
     <div class="copyright">© 2025 Izzoe. All rights reserved. Unauthorized copying prohibited.</div>
 
@@ -451,7 +463,7 @@
         const defaultSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let currentSheetUrl = defaultSheetUrl;
         let wordLists = { english: [], malay: [] };
-        const APP_VERSION = '1.3.0';
+        const APP_VERSION = '1.4.0';
         let deferredPrompt;
 
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -531,6 +543,7 @@
                 document.getElementById('modeModal').style.display = 'none';
                 document.getElementById('playerModal').style.display = 'none';
                 document.getElementById('resetModal').style.display = 'none';
+                document.getElementById('endGameModal').style.display = 'none';
                 document.getElementById('gameTab').style.display = 'block';
                 document.getElementById('settingsTab').style.display = 'none';
                 document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
@@ -542,12 +555,14 @@
                     document.getElementById('settingsTabButton').classList.add('hidden');
                     document.getElementById('playerSelect').classList.add('hidden');
                     document.getElementById('skipWordBtn').classList.add('hidden');
+                    document.getElementById('endGameBtn').classList.add('hidden');
                     document.getElementById('resetModeBtn').classList.remove('hidden');
                     document.getElementById('generateWordBtn').disabled = false;
                 } else {
                     document.getElementById('settingsTabButton').classList.remove('hidden');
                     document.getElementById('playerSelect').classList.remove('hidden');
                     document.getElementById('skipWordBtn').classList.remove('hidden');
+                    document.getElementById('endGameBtn').classList.remove('hidden');
                     document.getElementById('resetModeBtn').classList.add('hidden');
                     document.getElementById('generateWordBtn').disabled = !document.getElementById('playerSelect').value;
                 }
@@ -605,12 +620,14 @@
                 document.getElementById('settingsTabButton').classList.add('hidden');
                 document.getElementById('playerSelect').classList.add('hidden');
                 document.getElementById('skipWordBtn').classList.add('hidden');
+                document.getElementById('endGameBtn').classList.add('hidden');
                 document.getElementById('resetModeBtn').classList.remove('hidden');
                 document.getElementById('generateWordBtn').disabled = false;
             } else {
                 document.getElementById('settingsTabButton').classList.remove('hidden');
                 document.getElementById('playerSelect').classList.remove('hidden');
                 document.getElementById('skipWordBtn').classList.remove('hidden');
+                document.getElementById('endGameBtn').classList.remove('hidden');
                 document.getElementById('resetModeBtn').classList.add('hidden');
                 document.getElementById('generateWordBtn').disabled = true;
             }
@@ -734,11 +751,84 @@
             if (gameMode === 'casual') {
                 playerInput.classList.add('hidden');
                 setupTitle.textContent = 'Setup Word Generator';
+                document.getElementById('endGameBtn').classList.add('hidden');
             } else {
                 playerInput.classList.remove('hidden');
                 setupTitle.textContent = 'Setup Game';
+                document.getElementById('endGameBtn').classList.remove('hidden');
             }
             saveSessionState();
+        }
+
+        function endGame() {
+            if (gameMode === 'casual') return;
+            const finalLeaderboardList = document.getElementById('finalLeaderboardList');
+            finalLeaderboardList.innerHTML = '';
+            Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
+                const li = document.createElement('li');
+                li.textContent = `${name}: ${score} points`;
+                finalLeaderboardList.appendChild(li);
+            });
+            document.getElementById('endGameModal').style.display = 'flex';
+            document.getElementById('feedback').textContent = 'Game ended! Check the final scores.';
+            document.getElementById('feedback').className = 'green fade-in';
+        }
+
+        function startNewRegularGame() {
+            if (gameMode === 'casual') return;
+            players = {};
+            usedWords = { english: [], malay: [] };
+            document.getElementById('wordDisplay').textContent = '';
+            document.getElementById('wordDisplay').classList.remove('fade-in');
+            document.getElementById('playerSelect').innerHTML = '<option value="">Select Player</option>';
+            document.getElementById('removePlayerSelect').innerHTML = '<option value="">Select Player to Remove</option>';
+            document.getElementById('leaderboardList').innerHTML = '';
+            document.getElementById('endGameModal').style.display = 'none';
+            document.getElementById('playerModal').style.display = 'flex';
+            document.getElementById('setupTitle').textContent = 'Setup Game';
+            document.getElementById('playerInput').value = '';
+            document.getElementById('languageSelect').value = languageMode;
+            document.getElementById('generateWordBtn').disabled = true;
+            document.getElementById('feedback').textContent = 'Setup a new Regular Mode game.';
+            document.getElementById('feedback').className = 'green fade-in';
+            saveSessionState();
+            updateWordCount();
+        }
+
+        function changeMode() {
+            players = {};
+            wordLists = { english: [], malay: [] };
+            usedWords = { english: [], malay: [] };
+            currentWord = '';
+            languageMode = 'en';
+            useEnglish = true;
+            currentSheetUrl = defaultSheetUrl;
+            localStorage.removeItem('customSheetUrl');
+            document.getElementById('customSheetUrl').value = '';
+            document.getElementById('wordDisplay').textContent = '';
+            document.getElementById('wordDisplay').classList.remove('fade-in');
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('feedback').classList.remove('fade-in');
+            document.getElementById('playerSelect').innerHTML = '<option value="">Select Player</option>';
+            document.getElementById('removePlayerSelect').innerHTML = '<option value="">Select Player to Remove</option>';
+            document.getElementById('leaderboardList').innerHTML = '';
+            document.getElementById('gameTab').style.display = 'none';
+            document.getElementById('settingsTab').style.display = 'none';
+            document.getElementById('endGameModal').style.display = 'none';
+            document.getElementById('modeModal').style.display = 'flex';
+            document.getElementById('settingsTabButton').classList.remove('hidden');
+            document.getElementById('playerSelect').classList.remove('hidden');
+            document.getElementById('skipWordBtn').classList.remove('hidden');
+            document.getElementById('endGameBtn').classList.remove('hidden');
+            document.getElementById('resetModeBtn').classList.add('hidden');
+            document.getElementById('resetUsedWordsBtn').classList.add('hidden');
+            document.getElementById('generateWordBtn').disabled = true;
+            document.getElementById('leaderboard').style.display = 'none';
+            document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+            document.getElementById('feedbackSettings').textContent = 'Game reset! Choose a new mode.';
+            document.getElementById('feedbackSettings').className = 'green fade-in';
+            localStorage.removeItem('songGameState');
+            updateWordCount();
         }
 
         function resetGame() {
@@ -774,6 +864,7 @@
             document.getElementById('settingsTabButton').classList.remove('hidden');
             document.getElementById('playerSelect').classList.remove('hidden');
             document.getElementById('skipWordBtn').classList.remove('hidden');
+            document.getElementById('endGameBtn').classList.remove('hidden');
             document.getElementById('resetModeBtn').classList.add('hidden');
             document.getElementById('resetUsedWordsBtn').classList.add('hidden');
             document.getElementById('generateWordBtn').disabled = true;
