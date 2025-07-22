@@ -23,12 +23,12 @@
     <link rel="icon" href="/song-game/icons/favicon.ico">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QY8NH7DK0E"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', 'G-QY8NH7DK0E');
+        gtag('config', 'G-XXXXXXXXXX');
     </script>
     <style>
         body {
@@ -458,23 +458,28 @@
             e.preventDefault();
             deferredPrompt = e;
             document.getElementById('installButton').classList.remove('hidden');
+            console.log('Install prompt captured, waiting for user action');
         });
 
         function installApp() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        document.getElementById('feedback').textContent = 'App installed successfully!';
-                        document.getElementById('feedback').className = 'green fade-in';
-                    } else {
-                        document.getElementById('feedback').textContent = 'App installation canceled.';
-                        document.getElementById('feedback').className = 'red fade-in';
-                    }
-                    deferredPrompt = null;
-                    document.getElementById('installButton').classList.add('hidden');
-                });
+            if (!deferredPrompt) {
+                document.getElementById('feedback').textContent = 'App installation not available on this browser. Add to home screen manually.';
+                document.getElementById('feedback').className = 'red fade-in';
+                console.warn('Install prompt unavailable');
+                return;
             }
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                if (choiceResult.outcome === 'accepted') {
+                    document.getElementById('feedback').textContent = 'App installed successfully!';
+                    document.getElementById('feedback').className = 'green fade-in';
+                } else {
+                    document.getElementById('feedback').textContent = 'App installation canceled.';
+                    document.getElementById('feedback').className = 'red fade-in';
+                }
+                deferredPrompt = null;
+                document.getElementById('installButton').classList.add('hidden');
+            });
         }
 
         window.addEventListener('load', () => {
@@ -809,7 +814,7 @@
                     wordLists.english = english || [];
                     wordLists.malay = malay || [];
                     if (wordLists.english.length || wordLists.malay.length) {
-                        feedback.textContent = 'Offline: Using cached word list.';
+                        feedback.textContent = `Offline: Using cached word list with ${wordLists.english.length} English and ${wordLists.malay.length} Malay words.`;
                         feedback.className = 'green fade-in';
                         updateWordCount();
                         return true;
@@ -820,24 +825,23 @@
                 return false;
             }
             try {
-                const urlWithCacheBust = `${currentSheetUrl}?t=${new Date().getTime()}`;
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Fetch timeout: Unable to load words within 10 seconds')), 10000);
-                });
-                const fetchPromise = fetch(urlWithCacheBust);
-                const response = await Promise.race([fetchPromise, timeoutPromise]);
-                if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch word list`);
+                const response = await fetch(currentSheetUrl, { cache: 'no-store' });
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}: Failed to fetch word list. Ensure the Google Sheet is public and published as CSV.`);
+                }
                 const csvText = await response.text();
                 const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
                 const headers = rows[0].map(header => header.toLowerCase());
                 const malayCol = headers.indexOf('malay');
                 const englishCol = headers.indexOf('english');
-                if (malayCol === -1 || englishCol === -1) throw new Error('Headers "Malay" or "English" not found in word list');
+                if (malayCol === -1 || englishCol === -1) {
+                    throw new Error('Headers "Malay" or "English" not found in word list. Check the Google Sheet format in the help guide.');
+                }
                 wordLists.malay = rows.slice(1).map(row => row[malayCol]).filter(word => word && word !== '');
                 wordLists.english = rows.slice(1).map(row => row[englishCol]).filter(word => word && word !== '');
                 console.log('Fetched words:', { english: wordLists.english.length, malay: wordLists.malay.length });
                 if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
-                    throw new Error('No valid words found in the word list');
+                    throw new Error('No valid words found in the word list. Add words to the Google Sheet.');
                 }
                 localStorage.setItem('songGameWords', JSON.stringify({ english: wordLists.english, malay: wordLists.malay }));
                 usedWords = { english: [], malay: [] }; // Reset used words on successful fetch
@@ -854,21 +858,23 @@
                     wordLists.english = english || [];
                     wordLists.malay = malay || [];
                     if (wordLists.english.length || wordLists.malay.length) {
-                        feedback.textContent = `Error fetching words, using cached word list from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet. Retry in Settings.`;
+                        feedback.textContent = `Error fetching words: ${error.message}. Using cached word list with ${wordLists.english.length} English and ${wordLists.malay.length} Malay words. Retry in Settings or check the help guide.`;
                         feedback.className = 'green fade-in';
                         const retryBtn = document.createElement('button');
                         retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Now';
                         retryBtn.onclick = refreshWordList;
+                        retryBtn.setAttribute('aria-label', 'Retry fetching word list');
                         feedback.appendChild(retryBtn);
                         updateWordCount();
                         return true;
                     }
                 }
-                feedback.textContent = 'Error: Could not load word list. Ensure the Google Sheet is public (CSV, “Anyone with the link”). Retry in Settings or see the help guide.';
+                feedback.textContent = `Error: Could not load word list: ${error.message}. Ensure the Google Sheet is public (CSV, “Anyone with the link”). Retry in Settings or see the help guide.`;
                 feedback.className = 'red fade-in';
                 const retryBtn = document.createElement('button');
                 retryBtn.innerHTML = '<i class="fas fa-sync"></i> Retry Now';
                 retryBtn.onclick = refreshWordList;
+                retryBtn.setAttribute('aria-label', 'Retry fetching word list');
                 feedback.appendChild(retryBtn);
                 return false;
             }
@@ -879,6 +885,7 @@
             const feedback = document.getElementById('feedbackSettings');
             feedback.textContent = `Refreshing word list from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet...`;
             feedback.className = 'fade-in';
+            usedWords = { english: [], malay: [] }; // Reset used words to ensure accurate word count
             const success = await fetchWords();
             if (success) {
                 feedback.textContent = `Word list refreshed from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet! ${wordLists.english.length} English and ${wordLists.malay.length} Malay words available.`;

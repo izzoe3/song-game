@@ -6,7 +6,7 @@ The **Song Association Game** is a proprietary, closed-source project. Contribut
 
 ## Feedback and Bug Reports
 
-We value your feedback to improve the app. If you encounter bugs or have suggestions, please send an email to [your-email@example.com](mailto:zulhimiamar@gmail.com) with the following details:
+We value your feedback to improve the app. If you encounter bugs or have suggestions, please send an email to [zulhimiamar@gmail.com](mailto:zulhimiamar@gmail.com) with the following details:
 
 - **Subject**: Song Association Game Feedback
 - **Description**: A detailed explanation of the issue or suggestion

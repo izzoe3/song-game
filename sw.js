@@ -1,4 +1,4 @@
-const CACHE_NAME = 'song-game-cache-v1.3.0';
+const CACHE_NAME = 'song-game-cache-v1.3.1';
 const urlsToCache = [
     '/song-game/',
     '/song-game/index.html',
