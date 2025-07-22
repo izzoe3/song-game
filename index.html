@@ -459,6 +459,11 @@
         }
 
         function resetGame() {
+            if (!confirm('Are you sure you want to reset the game? This will clear all players, scores, and used words.')) {
+                document.getElementById('feedbackSettings').textContent = 'Game reset canceled.';
+                document.getElementById('feedbackSettings').className = 'green fade-in';
+                return;
+            }
             players = {};
             wordLists = { english: [], malay: [] };
             usedWords = { english: [], malay: [] };
