@@ -554,6 +554,56 @@
             }
         }
 
+        function startGame() {
+            const feedback = document.getElementById('feedback');
+            const playerInput = document.getElementById('playerInput').value.trim();
+            languageMode = document.getElementById('languageSelect').value;
+            if (gameMode === 'regular' && !playerInput) {
+                feedback.textContent = 'Please enter at least one player name for Regular Mode.';
+                feedback.className = 'red fade-in';
+                return;
+            }
+            if (gameMode === 'regular') {
+                players = {};
+                playerInput.split(',').map(name => name.trim()).filter(name => name).forEach(name => {
+                    players[name] = 0;
+                });
+                updatePlayerSelect();
+                updateRemovePlayerSelect();
+                updateLeaderboard();
+            }
+            document.getElementById('playerModal').style.display = 'none';
+            document.getElementById('gameTab').style.display = 'block';
+            document.getElementById('settingsTab').style.display = 'none';
+            document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
+            document.querySelector('.tab-button[onclick="showTab(\'settings\')"]').classList.remove('active');
+            document.getElementById('languageChangeSelect').value = languageMode;
+            if (gameMode === 'casual') {
+                document.getElementById('settingsTabButton').classList.add('hidden');
+                document.getElementById('playerSelect').classList.add('hidden');
+                document.getElementById('skipWordBtn').classList.add('hidden');
+                document.getElementById('resetModeBtn').classList.remove('hidden');
+                document.getElementById('generateWordBtn').disabled = false;
+            } else {
+                document.getElementById('settingsTabButton').classList.remove('hidden');
+                document.getElementById('playerSelect').classList.remove('hidden');
+                document.getElementById('skipWordBtn').classList.remove('hidden');
+                document.getElementById('resetModeBtn').classList.add('hidden');
+                document.getElementById('generateWordBtn').disabled = true;
+            }
+            fetchWords().then(success => {
+                if (success) {
+                    generateWord(true);
+                    feedback.textContent = 'Game started! Generate a word to begin.';
+                    feedback.className = 'green fade-in';
+                } else {
+                    feedback.textContent = 'Failed to load words. Check your internet or custom sheet URL in Settings.';
+                    feedback.className = 'red fade-in';
+                }
+            });
+            saveSessionState();
+        }
+
         function loadCustomSheetUrl() {
             const savedUrl = localStorage.getItem('customSheetUrl');
             if (savedUrl) {
@@ -612,13 +662,17 @@
         async function checkForUpdates() {
             try {
                 const response = await fetch('/song-game/version.txt');
+                if (!response.ok) {
+                    console.warn(`Version check failed: HTTP ${response.status}`);
+                    return;
+                }
                 const serverVersion = await response.text();
                 if (serverVersion.trim() !== APP_VERSION) {
                     document.getElementById('updateNotice').style.display = 'block';
                     document.getElementById('updateNotice').onclick = () => location.reload();
                 }
             } catch (e) {
-                console.log('Version check failed:', e);
+                console.warn('Version check failed:', e.message);
             }
         }
 
