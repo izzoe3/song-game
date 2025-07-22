@@ -1,34 +1,20 @@
-Contributing to Song Association Game
-Thank you for your interest in the Song Association Game! This project is closed-source and maintained by . While code contributions are not accepted, you can help improve the game by providing feedback or using your own word lists.
-Using Custom Word Lists
-To personalize the game with your own words:
+# Contributing to Song Association Game
 
-Create a Google Sheet with columns labeled “English” and “Malay”.
-Add words (e.g., “love” for English, “cinta” for Malay).
-Publish the sheet:
-Go to File > Share > Publish to web.
-Select “Comma-separated values (.csv)” and copy the link.
+## Closed-Source Project
 
+The **Song Association Game** is a proprietary, closed-source project. Contributions, including pull requests, code modifications, or forks, are not accepted. The source code is protected under the terms outlined in the [LICENSE](LICENSE) file.
 
-In the app’s Settings tab (Regular Mode only):
-Paste the CSV link into the “Custom Google Sheet URL” field.
-Click “Save Sheet URL” to load your words.
-Click “Refresh Word List” to update.
+## Feedback and Bug Reports
 
+We value your feedback to improve the app. If you encounter bugs or have suggestions, please send an email to [your-email@example.com](mailto:your-email@example.com) with the following details:
 
+- **Subject**: Song Association Game Feedback
+- **Description**: A detailed explanation of the issue or suggestion
+- **Environment**: Browser, device, and operating system used
+- **Steps to Reproduce**: For bug reports, include steps to replicate the issue
 
+## Reporting Issues
 
-Ensure the sheet is public (view-only, “Anyone with the link”).
+Please do not create issues on the GitHub repository, as they will not be reviewed. All communication should be directed via email to ensure proper handling.
 
-Providing Feedback
-
-Report bugs or suggest features by emailing zulhimiamar@gmail.com.
-Include details like device, browser, and steps to reproduce issues.
-
-Guidelines
-
-The default word list is maintained by  and is not publicly editable.
-Ensure custom Google Sheets are public (view-only) and follow the required format (English and Malay columns).
-For app updates, open the app online and refresh when prompted.
-
-Thank you for playing and sharing your feedback!
+Thank you for respecting the proprietary nature of this project. Play the game at [https://izzoe3.github.io/song-game/](https://izzoe3.github.io/song-game/)! 🎵

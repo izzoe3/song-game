@@ -1,64 +1,49 @@
-Song Association Game
-A lightweight Progressive Web App (PWA) for playing a fun song association game, where players sing songs containing randomly generated words in English or Malay. Hosted on GitHub Pages, it works offline and supports Casual (word generator) and Regular (players, scoring, leaderboard) modes.
-Features
+# Song Association Game 🎵
 
-Dual Modes: Casual (no scoring) and Regular (players, scores, leaderboard).
-Language Support: English, Malay, or both, sourced from a default word list or your own Google Sheet.
-Offline Play: Words and assets cached for seamless offline use.
-Accessible: ARIA attributes and keyboard navigation for inclusivity.
-Word Count: Displays remaining words to guide gameplay.
-Custom UI: Styled reset modal and share options (link, QR code).
-Theme Toggle: Light and dark modes for user preference.
-Custom Word Lists: Use your own Google Sheet for personalized words.
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
+![License](https://img.shields.io/badge/license-Proprietary-red)
 
-How to Play
+## About
 
-Access the App: Visit https://izzoe3.github.io/song-game/.
-Choose Mode:
-Casual: Generate words without scoring.
-Regular: Add players, earn points, and track scores on the leaderboard.
+The **Song Association Game** is a Progressive Web App (PWA) that challenges players to sing songs containing randomly generated words in English or Malay. Enjoy *Casual Mode* for relaxed play or *Regular Mode* for competitive fun with scoring and a leaderboard. The app works offline after the initial load, making it perfect for gatherings anywhere!
 
+Play now at [Song Association Game](https://izzoe3.github.io/song-game/)! 🚀
 
-Select Language: English, Malay, or both.
-Gameplay:
-A word appears (e.g., “love”). Sing a song containing that word.
-In Regular Mode, select a player, generate a word, and award points for valid songs.
-Skip words or reset used words if needed.
+<img src="https://izzoe3.github.io/song-game/screenshots/Song-game-izzoe3.jpeg" width="300" alt="Game Screenshot">
 
+## Features
 
-Share: Use the Share button or QR code to invite friends.
+- **Casual Mode**: Generate words without scoring for a fun, relaxed experience.
+- **Regular Mode**: Compete with friends, track scores, and view the leaderboard.
+- **Multilingual**: Supports English, Malay, or both languages.
+- **Custom Word Lists**: Use your own Google Sheet CSV for personalized words (Regular Mode).
+- **Offline Support**: Play without an internet connection after the initial load.
+- **Accessible**: Keyboard navigation and ARIA labels for inclusive gameplay.
 
-Installation
+## How to Play
 
-Open https://izzoe3.github.io/song-game/ in Chrome, Safari, or another modern browser.
-Tap the browser’s menu and select “Add to Home Screen” or “Install App.”
-Launch from your home screen for a standalone experience.
+1. Visit [https://izzoe3.github.io/song-game/](https://izzoe3.github.io/song-game/).
+2. Choose *Casual Mode* for word generation or *Regular Mode* for competitive play.
+3. In Regular Mode, add player names and select a language (English, Malay, or both).
+4. Generate a word and sing a song containing it within 15 seconds.
+5. Earn points in Regular Mode or enjoy endless fun in Casual Mode!
 
-Using Your Own Word List
-To use a custom word list:
+## Screenshots
 
-Create a Google Sheet with two columns: “English” and “Malay”.
-Add words in the respective columns (e.g., “love” for English, “cinta” for Malay).
-Publish the sheet:
-Go to File > Share > Publish to web.
-Select “Comma-separated values (.csv)” and copy the link.
+| Welcome Modal | Game Tab | Settings Tab |
+|---------------|----------|--------------|
+| <img src="https://izzoe3.github.io/song-game/screenshots/Song-game-izzoe3-2.jpeg" width="200" alt="Welcome Modal"> | <img src="https://izzoe3.github.io/song-game/screenshots/Song-game-izzoe3-game.jpeg" width="200" alt="Game Tab"> | <img src="https://izzoe3.github.io/song-game/screenshots/Song-game-izzoe3-settings.jpeg" width="200" alt="Settings Tab"> |
 
+## Installation
 
-In the app’s Settings tab (Regular Mode only):
-Paste the CSV link into the “Custom Google Sheet URL” field.
-Click “Save Sheet URL” to load your word list.
+1. Open the app in a modern browser (e.g., Chrome, Safari, Edge).
+2. Click the **Install App** button in the welcome modal or use your browser’s “Add to Home Screen” option.
+3. Access the app from your device’s home screen, even offline!
 
+## Contributing
 
-Click “Refresh Word List” to update words.
+This project is proprietary and closed-source. Contributions are not accepted. For feedback or bug reports, please email the maintainer as specified in [CONTRIBUTING.md](CONTRIBUTING.md). 📧
 
+## License
 
-Note: The sheet must be public (view-only, “Anyone with the link”). Leave the field blank to use the default word list.
-
-Feedback and Support
-
-This project is closed-source and maintained by .
-To report bugs or suggest features, contact zulhimiamar@gmail.com.
-For updates, check the app or refresh while online.
-
-License
-This software is proprietary and closed-source. See the LICENSE file for details.
+© 2025 Izzoe. All rights reserved. Unauthorized copying or distribution is prohibited. See [LICENSE](LICENSE) for details.
