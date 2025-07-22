@@ -136,7 +136,12 @@
             font-size: 2.5rem;
             font-weight: 700;
             color: #00d4ff;
-            display:block;
+            margin: 30px 0;
+            padding: 20px;
+            text-align: center;
+            background: #2c2c54;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         #feedback {
             margin-top: 10px;
@@ -161,6 +166,7 @@
         #leaderboard {
             margin-top: 20px;
             text-align: left;
+            display: none; /* Hide leaderboard by default */
         }
         #leaderboard h2 {
             font-size: 1.2rem;
@@ -310,6 +316,7 @@
             </select>
             <button onclick="removePlayer()"><i class="fas fa-user-minus"></i> Remove Player</button>
             <button onclick="refreshWordList()"><i class="fas fa-sync"></i> Refresh Word List</button>
+            <button onclick="resetGame()"><i class="fas fa-redo"></i> Reset Game</button>
             <button id="toggleLeaderboard" onclick="toggleLeaderboard()"><i class="fas fa-trophy"></i> Show Leaderboard</button>
             <div id="leaderboard">
                 <h2>Leaderboard</h2>
@@ -391,6 +398,10 @@
                     document.getElementById('generateWordBtn').disabled = !document.getElementById('playerSelect').value;
                 }
 
+                // Initialize leaderboard as hidden
+                document.getElementById('leaderboard').style.display = 'none';
+                document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+
                 updatePlayerSelect();
                 updateRemovePlayerSelect();
                 updateLeaderboard();
@@ -409,6 +420,8 @@
                 }
             } else {
                 document.getElementById('modeModal').style.display = 'flex';
+                document.getElementById('leaderboard').style.display = 'none';
+                document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
             }
         }
 
@@ -468,6 +481,10 @@
             document.getElementById('resetModeBtn').classList.add('hidden');
             document.getElementById('resetUsedWordsBtn').classList.add('hidden');
             document.getElementById('generateWordBtn').disabled = true;
+            document.getElementById('leaderboard').style.display = 'none';
+            document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+            document.getElementById('feedbackSettings').textContent = 'Game reset successfully!';
+            document.getElementById('feedbackSettings').className = 'green fade-in';
             localStorage.removeItem('songGameState');
             console.log('Game reset, showing mode selection');
         }
@@ -484,6 +501,10 @@
             document.getElementById('feedback').classList.remove('fade-in');
             document.getElementById('feedbackSettings').textContent = '';
             document.getElementById('feedbackSettings').classList.remove('fade-in');
+            if (tabName === 'settings') {
+                document.getElementById('leaderboard').style.display = 'none';
+                document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+            }
             enableGenerateButton();
         }
 
