@@ -1,7 +1,6 @@
 {
     "name": "Song Association Game",
-    "short_name": "Song Game",
-    "description": "A fun song association game with English and Malay words, playable in casual or regular mode.",
+    "short_name": "Song Association Game",
     "start_url": "/song-game/",
     "display": "standalone",
     "background_color": "#1a1a3d",

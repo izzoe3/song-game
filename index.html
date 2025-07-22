@@ -97,6 +97,10 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s;
         }
+        button:focus, select:focus, input:focus {
+            outline: 2px solid #00d4ff;
+            outline-offset: 2px;
+        }
         button {
             background: linear-gradient(45deg, #ff007a, #00d4ff);
             color: #fff;
@@ -143,6 +147,13 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
+        #wordCountDisplay {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #fff;
+            text-align: center;
+            margin-top: 10px;
+        }
         #feedback {
             margin-top: 10px;
             font-size: 1rem;
@@ -166,7 +177,7 @@
         #leaderboard {
             margin-top: 20px;
             text-align: left;
-            display: none; /* Hide leaderboard by default */
+            display: none;
         }
         #leaderboard h2 {
             font-size: 1.2rem;
@@ -268,56 +279,65 @@
         <div class="modal-content">
             <h2>Choose Game Mode</h2>
             <p>Casual Mode: Generate words without players or scoring.<br>Regular Mode: Play with players, scoring, and leaderboard.</p>
-            <button onclick="selectMode('casual')"><i class="fas fa-play"></i> Casual Mode</button>
-            <button onclick="selectMode('regular')"><i class="fas fa-users"></i> Regular Mode</button>
+            <button onclick="selectMode('casual')" aria-label="Select Casual Mode"><i class="fas fa-play"></i> Casual Mode</button>
+            <button onclick="selectMode('regular')" aria-label="Select Regular Mode"><i class="fas fa-users"></i> Regular Mode</button>
         </div>
     </div>
     <div id="playerModal" class="modal">
         <div class="modal-content">
             <h2 id="setupTitle">Setup Game</h2>
-            <input type="text" id="playerInput" placeholder="Enter player names (e.g., Ali, Siti)">
-            <select id="languageSelect">
+            <input type="text" id="playerInput" placeholder="Enter player names (e.g., Ali, Siti)" aria-label="Enter player names, separated by commas">
+            <select id="languageSelect" aria-label="Select language for words">
                 <option value="en">English</option>
                 <option value="ms">Malay</option>
                 <option value="both">Both</option>
             </select>
             <p>Words are loaded from a Google Sheet. Add new words there and click "Refresh Word List" in Settings (Regular Mode only).</p>
-            <button onclick="startGame()"><i class="fas fa-play"></i> Start Game</button>
+            <button onclick="startGame()" aria-label="Start the game"><i class="fas fa-play"></i> Start Game</button>
+        </div>
+    </div>
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Reset</h2>
+            <p>Are you sure you want to reset the game? This will clear all players, scores, and used words.</p>
+            <button onclick="confirmReset(true)" aria-label="Confirm game reset"><i class="fas fa-check"></i> Yes, Reset</button>
+            <button onclick="confirmReset(false)" aria-label="Cancel game reset"><i class="fas fa-times"></i> Cancel</button>
         </div>
     </div>
     <div class="container">
         <div class="tabs">
-            <button class="tab-button active" onclick="showTab('game')"><i class="fas fa-gamepad"></i> Game</button>
-            <button id="settingsTabButton" class="tab-button" onclick="showTab('settings')"><i class="fas fa-cog"></i> Settings</button>
+            <button class="tab-button active" onclick="showTab('game')" aria-label="Show Game tab"><i class="fas fa-gamepad"></i> Game</button>
+            <button id="settingsTabButton" class="tab-button" onclick="showTab('settings')" aria-label="Show Settings tab"><i class="fas fa-cog"></i> Settings</button>
         </div>
         <div id="gameTab" class="tab-content">
             <h1>Song Association Game</h1>
             <div id="wordDisplay">Loading...</div>
-            <select id="playerSelect" onchange="enableGenerateButton()">
+            <select id="playerSelect" onchange="enableGenerateButton()" aria-label="Select a player">
                 <option value="">Select Player</option>
             </select>
-            <button id="generateWordBtn" onclick="generateWord()"><i class="fas fa-sync-alt"></i> Generate New Word</button>
-            <button id="skipWordBtn" onclick="skipWord()"><i class="fas fa-forward"></i> Skip Word</button>
-            <button id="resetUsedWordsBtn" onclick="resetUsedWords()" class="hidden"><i class="fas fa-undo"></i> Reset Used Words</button>
-            <button id="resetModeBtn" onclick="resetGame()" class="hidden"><i class="fas fa-redo"></i> Reset/Change Mode</button>
-            <select id="languageChangeSelect" onchange="changeLanguage()">
+            <button id="generateWordBtn" onclick="generateWord()" aria-label="Generate a new word"><i class="fas fa-sync-alt"></i> Generate New Word</button>
+            <button id="skipWordBtn" onclick="skipWord()" aria-label="Skip to next word"><i class="fas fa-forward"></i> Skip Word</button>
+            <button id="resetUsedWordsBtn" onclick="resetUsedWords()" class="hidden" aria-label="Reset used words"><i class="fas fa-undo"></i> Reset Used Words</button>
+            <button id="resetModeBtn" onclick="resetGame()" class="hidden" aria-label="Reset game and change mode"><i class="fas fa-redo"></i> Reset/Change Mode</button>
+            <select id="languageChangeSelect" onchange="changeLanguage()" aria-label="Change language for words">
                 <option value="en">English</option>
                 <option value="ms">Malay</option>
                 <option value="both">Both</option>
             </select>
             <div id="feedback"></div>
+            <div id="wordCountDisplay"></div>
         </div>
         <div id="settingsTab" class="tab-content" style="display: none;">
             <h1>Settings</h1>
-            <input type="text" id="addPlayerInput" placeholder="Enter new player name">
-            <button onclick="addPlayer()"><i class="fas fa-user-plus"></i> Add Player</button>
-            <select id="removePlayerSelect">
+            <input type="text" id="addPlayerInput" placeholder="Enter new player name" aria-label="Enter new player name">
+            <button onclick="addPlayer()" aria-label="Add a new player"><i class="fas fa-user-plus"></i> Add Player</button>
+            <select id="removePlayerSelect" aria-label="Select player to remove">
                 <option value="">Select Player to Remove</option>
             </select>
-            <button onclick="removePlayer()"><i class="fas fa-user-minus"></i> Remove Player</button>
-            <button onclick="refreshWordList()"><i class="fas fa-sync"></i> Refresh Word List</button>
-            <button onclick="resetGame()"><i class="fas fa-redo"></i> Reset Game</button>
-            <button id="toggleLeaderboard" onclick="toggleLeaderboard()"><i class="fas fa-trophy"></i> Show Leaderboard</button>
+            <button onclick="removePlayer()" aria-label="Remove selected player"><i class="fas fa-user-minus"></i> Remove Player</button>
+            <button onclick="refreshWordList()" aria-label="Refresh word list from Google Sheet"><i class="fas fa-sync"></i> Refresh Word List</button>
+            <button onclick="resetGame()" aria-label="Reset game, clearing all data"><i class="fas fa-redo"></i> Reset Game</button>
+            <button id="toggleLeaderboard" onclick="toggleLeaderboard()" aria-label="Toggle leaderboard visibility"><i class="fas fa-trophy"></i> Show Leaderboard</button>
             <div id="leaderboard">
                 <h2>Leaderboard</h2>
                 <ul id="leaderboardList"></ul>
@@ -325,7 +345,7 @@
             <div id="feedbackSettings"></div>
         </div>
     </div>
-    <div class="app-version">App Version: Beta 1.1</div>
+    <div class="app-version">App Version: 1.2.0</div>
 
     <script>
         let players = {};
@@ -337,7 +357,6 @@
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let wordLists = { english: [], malay: [] };
 
-        // Load session state from localStorage on page load
         window.addEventListener('load', () => {
             loadSessionState();
             if ('serviceWorker' in navigator) {
@@ -345,9 +364,15 @@
                     .then(reg => console.log('Service Worker registered:', reg))
                     .catch(err => console.error('Service Worker registration failed:', err));
             }
+            document.querySelectorAll('button, select, input').forEach(element => {
+                element.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && element.tagName === 'BUTTON') {
+                        element.click();
+                    }
+                });
+            });
         });
 
-        // Save session state to localStorage
         function saveSessionState() {
             const state = {
                 players,
@@ -361,7 +386,6 @@
             console.log('Session state saved:', state);
         }
 
-        // Load session state from localStorage
         function loadSessionState() {
             const state = localStorage.getItem('songGameState');
             if (state) {
@@ -373,17 +397,15 @@
                 useEnglish = parsed.useEnglish !== undefined ? parsed.useEnglish : true;
                 currentWord = parsed.currentWord || '';
                 console.log('Session state loaded:', parsed);
-
-                // Restore UI state
                 document.getElementById('modeModal').style.display = 'none';
                 document.getElementById('playerModal').style.display = 'none';
+                document.getElementById('resetModal').style.display = 'none';
                 document.getElementById('gameTab').style.display = 'block';
                 document.getElementById('settingsTab').style.display = 'none';
                 document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
                 document.getElementById('languageChangeSelect').value = languageMode;
                 document.getElementById('wordDisplay').textContent = currentWord || 'Loading...';
                 if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
-
                 if (gameMode === 'casual') {
                     document.getElementById('settingsTabButton').classList.add('hidden');
                     document.getElementById('playerSelect').classList.add('hidden');
@@ -397,26 +419,24 @@
                     document.getElementById('resetModeBtn').classList.add('hidden');
                     document.getElementById('generateWordBtn').disabled = !document.getElementById('playerSelect').value;
                 }
-
-                // Initialize leaderboard as hidden
                 document.getElementById('leaderboard').style.display = 'none';
                 document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
-
                 updatePlayerSelect();
                 updateRemovePlayerSelect();
                 updateLeaderboard();
-
-                // Fetch words if wordLists are empty
+                updateWordCount();
                 if (!wordLists.english.length && !wordLists.malay.length) {
                     fetchWords().then(success => {
                         if (success && currentWord) {
                             document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
                             document.getElementById('feedback').className = 'green fade-in';
+                            updateWordCount();
                         }
                     });
                 } else {
                     document.getElementById('feedback').textContent = 'Session restored! Continue playing.';
                     document.getElementById('feedback').className = 'green fade-in';
+                    updateWordCount();
                 }
             } else {
                 document.getElementById('modeModal').style.display = 'flex';
@@ -425,7 +445,6 @@
             }
         }
 
-        // Add ripple effect and haptic feedback on button clicks
         document.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 if (navigator.vibrate) navigator.vibrate(50);
@@ -459,7 +478,12 @@
         }
 
         function resetGame() {
-            if (!confirm('Are you sure you want to reset the game? This will clear all players, scores, and used words.')) {
+            document.getElementById('resetModal').style.display = 'flex';
+        }
+
+        function confirmReset(confirmed) {
+            document.getElementById('resetModal').style.display = 'none';
+            if (!confirmed) {
                 document.getElementById('feedbackSettings').textContent = 'Game reset canceled.';
                 document.getElementById('feedbackSettings').className = 'green fade-in';
                 return;
@@ -491,12 +515,13 @@
             document.getElementById('feedbackSettings').textContent = 'Game reset successfully!';
             document.getElementById('feedbackSettings').className = 'green fade-in';
             localStorage.removeItem('songGameState');
+            updateWordCount();
             console.log('Game reset, showing mode selection');
         }
 
         function showTab(tabName) {
             if (gameMode === 'casual' && tabName === 'settings') {
-                return; // Prevent showing Settings tab in casual mode
+                return;
             }
             document.getElementById('gameTab').style.display = tabName === 'game' ? 'block' : 'none';
             document.getElementById('settingsTab').style.display = tabName === 'settings' ? 'block' : 'none';
@@ -516,7 +541,19 @@
         async function fetchWords() {
             const feedback = document.getElementById('feedbackSettings') || document.getElementById('feedback');
             if (!navigator.onLine) {
-                feedback.textContent = 'Offline: Please connect to the internet to load words.';
+                const cachedWords = localStorage.getItem('songGameWords');
+                if (cachedWords) {
+                    const { english, malay } = JSON.parse(cachedWords);
+                    wordLists.english = english || [];
+                    wordLists.malay = malay || [];
+                    if (wordLists.english.length || wordLists.malay.length) {
+                        feedback.textContent = 'Offline: Using cached word list.';
+                        feedback.className = 'green fade-in';
+                        updateWordCount();
+                        return true;
+                    }
+                }
+                feedback.textContent = 'Offline: No cached words available. Connect to the internet to load words.';
                 feedback.className = 'red fade-in';
                 return false;
             }
@@ -529,26 +566,37 @@
                 if (!response.ok) throw new Error(`HTTP error ${response.status}: Failed to fetch Google Sheet`);
                 const csvText = await response.text();
                 const rows = csvText.split('\n').map(row => row.split(',').map(cell => cell.trim()));
-                
-                // Find column indices based on headers (case-insensitive)
                 const headers = rows[0].map(header => header.toLowerCase());
                 const malayCol = headers.indexOf('malay');
                 const englishCol = headers.indexOf('english');
                 if (malayCol === -1 || englishCol === -1) throw new Error('Headers "Malay" or "English" not found in Google Sheet');
-
                 wordLists.malay = rows.slice(1).map(row => row[malayCol]).filter(word => word && word !== '');
                 wordLists.english = rows.slice(1).map(row => row[englishCol]).filter(word => word && word !== '');
                 console.log('Fetched words:', { english: wordLists.english.length, malay: wordLists.malay.length });
                 if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
                     throw new Error('No valid words found in the Google Sheet');
                 }
-                usedWords = { english: [], malay: [] }; // Reset used words on fetch
+                localStorage.setItem('songGameWords', JSON.stringify({ english: wordLists.english, malay: wordLists.malay }));
+                usedWords = { english: [], malay: [] };
                 saveSessionState();
                 feedback.textContent = 'Word list loaded successfully!';
                 feedback.className = 'green fade-in';
+                updateWordCount();
                 return true;
             } catch (error) {
                 console.error('Error fetching words:', error.message);
+                const cachedWords = localStorage.getItem('songGameWords');
+                if (cachedWords) {
+                    const { english, malay } = JSON.parse(cachedWords);
+                    wordLists.english = english || [];
+                    wordLists.malay = malay || [];
+                    if (wordLists.english.length || wordLists.malay.length) {
+                        feedback.textContent = 'Error fetching words, using cached word list.';
+                        feedback.className = 'green fade-in';
+                        updateWordCount();
+                        return true;
+                    }
+                }
                 feedback.textContent = 'Error: Could not load Google Sheet. Ensure it’s published as CSV and set to "Anyone with the link" (Viewer).';
                 feedback.className = 'red fade-in';
                 return false;
@@ -556,7 +604,6 @@
         }
 
         async function startGame() {
-            // Reset state to ensure clean start
             players = {};
             wordLists = { english: [], malay: [] };
             usedWords = { english: [], malay: [] };
@@ -620,12 +667,13 @@
                 document.getElementById('generateWordBtn').disabled = true;
             }
             saveSessionState();
+            generateWord(true);
+            updateWordCount();
             console.log('Starting game with mode:', gameMode, 'language:', languageMode, 'players:', Object.keys(players), 'available words:', availableWords.length);
-            generateWord(true); // Generate initial word
         }
 
         async function refreshWordList() {
-            if (gameMode === 'casual') return; // Disabled in casual mode
+            if (gameMode === 'casual') return;
             const feedback = document.getElementById('feedbackSettings');
             feedback.textContent = 'Refreshing word list...';
             feedback.className = 'fade-in';
@@ -634,7 +682,8 @@
                 feedback.textContent = 'Word list refreshed! Return to Game tab to continue.';
                 feedback.className = 'green fade-in';
                 document.getElementById('resetUsedWordsBtn').classList.add('hidden');
-                generateWord(true); // Generate new word after refresh
+                generateWord(true);
+                updateWordCount();
             }
         }
 
@@ -672,7 +721,7 @@
             leaderboardList.innerHTML = '';
             Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
                 const li = document.createElement('li');
-                li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')"><i class="fas fa-plus"></i></button><button class="score-btn" onclick="decrementScore('${name}')"><i class="fas fa-minus"></i></button>`;
+                li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')" aria-label="Add point to ${name}"><i class="fas fa-plus"></i></button><button class="score-btn" onclick="decrementScore('${name}')" aria-label="Remove point from ${name}"><i class="fas fa-minus"></i></button>`;
                 leaderboardList.appendChild(li);
             });
             saveSessionState();
@@ -721,6 +770,17 @@
             generateBtn.disabled = !player;
         }
 
+        function updateWordCount() {
+            let availableWords = [];
+            if (languageMode === 'both') {
+                availableWords = [...wordLists.english.filter(word => !usedWords.english.includes(word)), ...wordLists.malay.filter(word => !usedWords.malay.includes(word))];
+            } else {
+                const usedWordsKey = languageMode === 'en' ? 'english' : 'malay';
+                availableWords = wordLists[usedWordsKey].filter(word => !usedWords[usedWordsKey].includes(word));
+            }
+            document.getElementById('wordCountDisplay').textContent = `Words remaining: ${availableWords.length}`;
+        }
+
         function resetUsedWords() {
             usedWords = { english: [], malay: [] };
             document.getElementById('resetUsedWordsBtn').classList.add('hidden');
@@ -728,7 +788,8 @@
             document.getElementById('feedback').className = 'green fade-in';
             document.getElementById('generateWordBtn').disabled = gameMode === 'regular' && !document.getElementById('playerSelect').value;
             saveSessionState();
-            generateWord(true); // Generate a new word
+            generateWord(true);
+            updateWordCount();
             console.log('Used words reset');
         }
 
@@ -776,6 +837,7 @@
                 feedback.className = 'red fade-in';
                 resetUsedWordsBtn.classList.remove('hidden');
                 if (gameMode === 'regular') generateBtn.disabled = true;
+                updateWordCount();
                 return;
             }
 
@@ -788,15 +850,16 @@
                 generateBtn.disabled = true;
             }
             if (gameMode === 'casual') {
-                generateBtn.disabled = false; // Always enabled in casual mode
+                generateBtn.disabled = false;
             }
             updateLeaderboard();
             saveSessionState();
+            updateWordCount();
             console.log('Generated word:', currentWord, 'for language:', lang, 'used words:', usedWords[usedWordsKey].length);
         }
 
         function skipWord() {
-            if (gameMode === 'casual') return; // Disabled in casual mode
+            if (gameMode === 'casual') return;
             let wordList;
             let lang;
             let usedWordsKey;
@@ -819,6 +882,7 @@
                 feedback.className = 'red fade-in';
                 document.getElementById('generateWordBtn').disabled = true;
                 resetUsedWordsBtn.classList.remove('hidden');
+                updateWordCount();
                 return;
             }
             currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
@@ -830,6 +894,7 @@
             feedback.textContent = 'Word skipped! New word generated.';
             feedback.className = 'green fade-in';
             saveSessionState();
+            updateWordCount();
             console.log('Skipped to word:', currentWord, 'for language:', lang, 'used words:', usedWords[usedWordsKey].length);
         }
 
@@ -875,11 +940,12 @@
 
         function changeLanguage() {
             languageMode = document.getElementById('languageChangeSelect').value;
-            useEnglish = true; // Reset alternation for "Both" mode
+            useEnglish = true;
             document.getElementById('feedback').textContent = `Language changed to ${languageMode === 'en' ? 'English' : languageMode === 'ms' ? 'Malay' : 'Both'}.`;
             document.getElementById('feedback').className = 'green fade-in';
             document.getElementById('resetUsedWordsBtn').classList.add('hidden');
-            generateWord(true); // Generate new word on language change
+            generateWord(true);
+            updateWordCount();
         }
     </script>
 </body>
