@@ -3,7 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#00d4ff">
     <title>Song Association Game</title>
+    <link rel="manifest" href="/song-game/manifest.json">
+    <link rel="apple-touch-icon" href="/song-game/icons/icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -250,8 +255,8 @@
         <div class="modal-content">
             <h2>Choose Game Mode</h2>
             <p>Casual Mode: Generate words without players or scoring.<br>Regular Mode: Play with players, scoring, and leaderboard.</p>
-            <button onclick="selectMode('casual')"><i class="fas fa-play"></i>Casual Mode</button>
-            <button onclick="selectMode('regular')"><i class="fas fa-users"></i>Regular Mode</button>
+            <button onclick="selectMode('casual')"><i class="fas fa-play"></i> Casual Mode</button>
+            <button onclick="selectMode('regular')"><i class="fas fa-users"></i> Regular Mode</button>
         </div>
     </div>
     <div id="playerModal" class="modal">
@@ -264,7 +269,7 @@
                 <option value="both">Both</option>
             </select>
             <p>Words are loaded from a Google Sheet. Add new words there and click "Refresh Word List" in Settings (Regular Mode only).</p>
-            <button onclick="startGame()"><i class="fas fa-play"></i>Start Game</button>
+            <button onclick="startGame()"><i class="fas fa-play"></i> Start Game</button>
         </div>
     </div>
     <div class="container">
@@ -315,8 +320,14 @@
         const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let wordLists = { english: [], malay: [] };
 
-        // Show mode selection modal on page load
-        document.getElementById('modeModal').style.display = 'flex';
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/song-game/sw.js')
+                    .then(reg => console.log('Service Worker registered:', reg))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
 
         // Add ripple effect and haptic feedback on button clicks
         document.querySelectorAll('button').forEach(btn => {
@@ -334,6 +345,9 @@
                 setTimeout(() => ripple.remove(), 600);
             });
         });
+
+        // Show mode selection modal on page load
+        document.getElementById('modeModal').style.display = 'flex';
 
         function selectMode(mode) {
             gameMode = mode;
@@ -391,6 +405,11 @@
 
         async function fetchWords() {
             const feedback = document.getElementById('feedbackSettings') || document.getElementById('feedback');
+            if (!navigator.onLine) {
+                feedback.textContent = 'Offline: Please connect to the internet to load words.';
+                feedback.className = 'red fade-in';
+                return false;
+            }
             try {
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error('Fetch timeout: Unable to load words within 10 seconds')), 10000);
