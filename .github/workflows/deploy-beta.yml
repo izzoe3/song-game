@@ -32,6 +32,7 @@ jobs:
           publish_dir: .
           destination_dir: v2.0.0-beta
           publish_branch: main
+          keep_files: true  # Preserve existing files (e.g., v1.5.0 in root)
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
