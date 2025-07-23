@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Song Association Game - Gauntlet Mode">
+    <title>Song Association Game - Gauntlet Mode</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap">
+    <link rel="stylesheet" href="/song-game/css/styles-gauntlet.css">
+    <link rel="manifest" href="/song-game/manifest.json">
+    <link rel="icon" href="/song-game/icons/favicon.ico">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Song Association Game - Gauntlet Mode</h1>
+            <p id="version">Version 2.0.0</p>
+        </header>
+        <main>
+            <!-- Setup Modal -->
+            <div id="gauntletSetupModal" class="modal" role="dialog" aria-labelledby="gauntletSetupTitle">
+                <div class="modal-content">
+                    <h2 id="gauntletSetupTitle">Gauntlet Mode Setup</h2>
+                    <form id="gauntletSetupForm">
+                        <label for="playersInput">Enter Player/Team Names (comma-separated):</label>
+                        <input type="text" id="playersInput" aria-describedby="playersHelp" required>
+                        <p id="playersHelp" class="help-text">E.g., Alice, Bob, Team A, Team B</p>
+                        <label for="languageSelect">Select Language:</label>
+                        <select id="languageSelect" aria-describedby="languageHelp">
+                            <option value="both">English & Malay</option>
+                            <option value="english">English</option>
+                            <option value="malay">Malay</option>
+                        </select>
+                        <p id="languageHelp" class="help-text">Choose the word list language(s).</p>
+                        <button type="submit" class="btn">Start Game</button>
+                    </form>
+                    <button class="btn back-btn" onclick="window.location.href='/song-game/index.html'">Back to Main Menu</button>
+                </div>
+            </div>
+            <!-- Game Screen -->
+            <div id="gameScreen" class="game-container hidden" role="region" aria-live="polite">
+                <h2 id="currentPlayer">Player: </h2>
+                <div id="wordDisplay" class="word-display"></div>
+                <div id="thinkingTimer" class="timer">Thinking: 5s</div>
+                <div id="singingTimer" class="timer hidden">Singing: 60s</div>
+                <form id="scoreForm" class="hidden">
+                    <label for="scoreInput">Enter Number of Songs Sung:</label>
+                    <input type="number" id="scoreInput" min="0" aria-describedby="scoreHelp" required>
+                    <p id="scoreHelp" class="help-text">Enter a non-negative number.</p>
+                    <button type="submit" class="btn">Submit Score</button>
+                </form>
+                <button id="skipWordBtn" class="btn">Skip Word</button>
+                <button id="endGameBtn" class="btn">End Game</button>
+            </div>
+            <!-- End Game Modal -->
+            <div id="endGameModal" class="modal hidden" role="dialog" aria-labelledby="endGameTitle">
+                <div class="modal-content">
+                    <h2 id="endGameTitle">Game Over</h2>
+                    <p id="endGameMessage"></p>
+                    <div id="leaderboard"></div>
+                    <button class="btn" onclick="resumeGame()">Resume Game</button>
+                    <button class="btn" onclick="newGauntletGame()">New Gauntlet Game</button>
+                    <button class="btn" onclick="window.location.href='/song-game/index.html'">Change Mode</button>
+                </div>
+            </div>
+            <!-- Feedback Message -->
+            <div id="feedback" class="feedback" role="alert" aria-live="assertive"></div>
+        </main>
+    </div>
+    <script src="/song-game/js/script-gauntlet.js"></script>
+</body>
+</html>
