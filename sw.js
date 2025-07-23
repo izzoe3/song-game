@@ -1,13 +1,15 @@
-const CACHE_NAME = 'song-game-cache-v1.4.2';
+const CACHE_NAME = 'song-game-cache-v1.5.0';
 const urlsToCache = [
-    '/song-game/',
-    '/song-game/index.html',
-    '/song-game/manifest.json',
-    '/song-game/version.txt',
-    '/song-game/icons/icon-192.png',
-    '/song-game/icons/icon-512.png',
-    '/song-game/icons/favicon.ico',
-    '/song-game/custom-word-list.md',
+    './',
+    './index.html',
+    './css/styles.css',
+    './js/script.js',
+    './manifest.json',
+    './version.txt',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
+    './icons/favicon.ico',
+    './custom-word-list.md',
     'https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap',
     'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
 ];
@@ -19,7 +21,9 @@ self.addEventListener('install', event => {
                 console.log('Opened cache');
                 return cache.addAll(urlsToCache);
             })
+            .catch(err => console.error('Cache addAll failed:', err))
     );
+    self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
@@ -41,7 +45,9 @@ self.addEventListener('fetch', event => {
                             });
                         return response;
                     }
-                );
+                ).catch(() => {
+                    return caches.match('./index.html');
+                });
             })
     );
 });
@@ -53,10 +59,13 @@ self.addEventListener('activate', event => {
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (!cacheWhitelist.includes(cacheName)) {
+                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
+        }).then(() => {
+            return self.clients.claim();
         })
     );
 });
