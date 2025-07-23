@@ -1,0 +1,367 @@
+/* Base Styles */
+body {
+    font-family: 'Montserrat', 'Poppins', Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(45deg, #1a1a3d, #2a2a5e);
+    background-size: 200% 200%;
+    animation: gradientShift 15s ease infinite;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    color: #fff;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.container {
+    max-width: 600px;
+    width: 90%;
+    background: linear-gradient(145deg, #2c2c54, #35357a);
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    padding: 20px;
+    margin: 20px 10px;
+}
+
+.tabs {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 15px;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 15px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: #3a3a6e;
+    color: #fff;
+    border: none;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.3s;
+}
+
+.tab-button.active {
+    background: linear-gradient(45deg, #00d4ff, #ff007a);
+    color: #fff;
+}
+
+.tab-button:hover, .tab-button:active {
+    transform: scale(1.05);
+    background: #00b4d8;
+}
+
+h1 {
+    font-size: 1.6rem;
+    text-align: center;
+    margin: 10px 0;
+}
+
+select, button, input {
+    margin: 10px auto;
+    padding: 15px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    display: block;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s;
+    color: #333;
+}
+
+button:focus, select:focus, input:focus {
+    outline: 2px solid #00d4ff;
+    outline-offset: 2px;
+}
+
+button {
+    background: linear-gradient(45deg, #ff007a, #00d4ff);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    min-height: 60px;
+    position: relative;
+    overflow: hidden;
+}
+
+button:disabled {
+    background: #666;
+    cursor: not-allowed;
+}
+
+button i {
+    margin-right: 8px;
+}
+
+.help-icon {
+    font-size: 0.9rem;
+    padding: 8px;
+    min-height: auto;
+    width: auto;
+    display: inline-block;
+    margin-left: 10px;
+}
+
+.ripple {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: rippleEffect 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes rippleEffect {
+    to { transform: scale(4); opacity: 0; }
+}
+
+#currentTeam, #wordDisplay {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #00d4ff;
+    margin: 30px 0;
+    padding: 20px;
+    text-align: center;
+    background: #2c2c54;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.timer {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #ffd700;
+    margin: 15px 0;
+    padding: 15px;
+    text-align: center;
+    background: rgba(0, 212, 255, 0.2);
+    border-radius: 10px;
+}
+
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.button-group button {
+    flex: 1;
+    min-width: 120px;
+}
+
+#wordCountDisplay {
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+    margin-top: 10px;
+}
+
+#feedback, #feedbackSettings {
+    margin-top: 10px;
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+#feedback.green, #feedbackSettings.green {
+    color: #00ff85;
+}
+
+#feedback.red, #feedbackSettings.red {
+    color: #ff4d4d;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+#leaderboard, #finalLeaderboard {
+    margin-top: 20px;
+    text-align: left;
+}
+
+#leaderboard h2, #finalLeaderboard h2 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+#leaderboard ul, #finalLeaderboard ul {
+    list-style: none;
+    padding: 0;
+}
+
+#leaderboard li, #finalLeaderboard li {
+    font-size: 1rem;
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: #2c2c54;
+    padding: 20px;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content input, .modal-content select, .modal-content button {
+    margin: 10px auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.modal-content p {
+    font-size: 0.9rem;
+}
+
+.modal-content .button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.modal-content .button-group button {
+    flex: 1;
+    min-width: 120px;
+}
+
+.hidden {
+    display: none;
+}
+
+.app-version {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    z-index: 1000;
+}
+
+.update-notice {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #ff007a;
+    color: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    z-index: 1001;
+    display: none;
+}
+
+#qrCode {
+    margin: 20px auto;
+    max-width: 150px;
+}
+
+fieldset {
+    border: 1px solid #00d4ff;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+legend {
+    font-weight: 700;
+    color: #00d4ff;
+    padding: 0 10px;
+}
+
+.settings-group {
+    margin-bottom: 20px;
+}
+
+.settings-group input, .settings-group select, .settings-group button {
+    margin: 8px 0;
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.4rem;
+    }
+    #currentTeam, #wordDisplay {
+        font-size: 2rem;
+        padding: 15px;
+    }
+    .timer {
+        font-size: 1.2rem;
+        padding: 12px;
+    }
+    select, button, input {
+        font-size: 0.9rem;
+        padding: 12px;
+    }
+    .tab-button {
+        font-size: 0.9rem;
+    }
+    .button-group button {
+        min-width: 100px;
+    }
+    .app-version {
+        font-size: 0.7rem;
+    }
+    .update-notice {
+        font-size: 0.8rem;
+        padding: 8px;
+    }
+    fieldset {
+        padding: 10px;
+    }
+    legend {
+        font-size: 0.9rem;
+    }
+    .help-icon {
+        font-size: 0.8rem;
+        padding: 6px;
+    }
+    .modal-content .button-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .modal-content .button-group button {
+        min-width: 100%;
+    }
+}

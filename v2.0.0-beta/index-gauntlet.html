@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#00d4ff">
+    <meta name="description" content="Play Song Association Game in Gauntlet Mode, a competitive PWA where teams sing one song per turn for a shared word. Continue until teams agree to move to the next word. Works offline!">
+    <meta name="keywords" content="song association game, gauntlet mode, music game, PWA, offline game, English, Malay, word game, party game">
+    <meta name="author" content="Izzoe">
+    <meta property="og:title" content="Song Association Game - Gauntlet Mode">
+    <meta property="og:description" content="Sing one song per turn for a shared word in timed rounds! Play offline with teams in Gauntlet Mode.">
+    <meta property="og:image" content="https://izzoe3.github.io/song-game/icons/icon-512.png">
+    <meta property="og:url" content="https://izzoe3.github.io/song-game/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Song Association Game - Gauntlet Mode">
+    <meta name="twitter:description" content="Sing one song per turn for a shared word in timed rounds! Play offline in Gauntlet Mode.">
+    <meta name="twitter:image" content="https://izzoe3.github.io/song-game/icons/icon-512.png">
+    <title>Song Association Game - Gauntlet Mode</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" href="icons/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/styles-gauntlet.css">
+</head>
+<body>
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="modal">
+        <div class="modal-content">
+            <h2>Welcome to Gauntlet Mode!</h2>
+            <p>Sing one song per turn containing a shared word in English or Malay within 15 or 30 seconds. Teams take turns until all agree to move to the next word. Works offline after initial load!</p>
+            <button onclick="showSetupModal()" aria-label="Get started with Gauntlet Mode"><i class="fas fa-play"></i> Get Started</button>
+            <button onclick="installApp()" id="installButton" class="hidden" aria-label="Install the app"><i class="fas fa-download"></i> Install App</button>
+            <button onclick="shareApp()" aria-label="Share Gauntlet Mode"><i class="fas fa-share-alt"></i> Share Game</button>
+            <img id="qrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://izzoe3.github.io/song-game/" alt="QR code to share game">
+            <button onclick="window.location.href='index.html'" aria-label="Return to main game"><i class="fas fa-arrow-left"></i> Back to Main Game</button>
+        </div>
+    </div>
+
+    <!-- Setup Modal -->
+    <div id="setupModal" class="modal">
+        <div class="modal-content">
+            <h2>Setup Gauntlet Mode</h2>
+            <input type="text" id="playerInput" placeholder="Enter team names (e.g., Team A, Team B)" aria-label="Enter team names, separated by commas">
+            <select id="languageSelect" aria-label="Select language for words">
+                <option value="both">Both</option>
+                <option value="en">English</option>
+                <option value="ms">Malay</option>
+            </select>
+            <select id="timerSelect" aria-label="Select timer duration">
+                <option value="15">15 Seconds</option>
+                <option value="30">30 Seconds</option>
+            </select>
+            <p>Words are loaded from a default word list. To use your own word list, add a Google Sheet URL in Settings.</p>
+            <button onclick="startGame()" aria-label="Start Gauntlet Mode"><i class="fas fa-play"></i> Start Game</button>
+        </div>
+    </div>
+
+    <!-- End Game Modal -->
+    <div id="endGameModal" class="modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <p id="endGameMessage" aria-live="polite">Final scores:</p>
+            <div id="finalLeaderboard">
+                <h2>Leaderboard</h2>
+                <ul id="finalLeaderboardList"></ul>
+            </div>
+            <div class="button-group">
+                <button onclick="closeEndGameModal()" aria-label="End current session"><i class="fas fa-times"></i> End Session</button>
+                <button onclick="continueGame()" aria-label="Resume current game"><i class="fas fa-play"></i> Resume Game</button>
+                <button onclick="startNewGauntletGame()" aria-label="Start a new Gauntlet Mode game"><i class="fas fa-users"></i> New Gauntlet Game</button>
+                <button onclick="window.location.href='index.html'" aria-label="Return to main game"><i class="fas fa-arrow-left"></i> Back to Main Game</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Reset</h2>
+            <p>Are you sure you want to reset the game? This will clear all teams, scores, and used words.</p>
+            <button onclick="confirmReset(true)" aria-label="Confirm game reset"><i class="fas fa-check"></i> Yes, Reset</button>
+            <button onclick="confirmReset(false)" aria-label="Cancel game reset"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+    </div>
+
+    <!-- Next Word Confirmation Modal -->
+    <div id="nextWordModal" class="modal">
+        <div class="modal-content">
+            <h2>Move to Next Word?</h2>
+            <p>All teams agree to move to the next word?</p>
+            <button onclick="confirmNextWord(true)" aria-label="Confirm move to next word"><i class="fas fa-check"></i> Confirm</button>
+            <button onclick="confirmNextWord(false)" aria-label="Cancel move to next word"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-button active" onclick="showTab('game')" aria-label="Show Game tab"><i class="fas fa-gamepad"></i> Game</button>
+            <button class="tab-button" onclick="showTab('settings')" aria-label="Show Settings tab"><i class="fas fa-cog"></i> Settings</button>
+        </div>
+
+        <!-- Game Tab -->
+        <div id="gameTab" class="tab-content">
+            <h1>Song Association Game - Gauntlet Mode</h1>
+            <div id="currentTeam" role="alert" aria-live="polite">Team: Loading...</div>
+            <div id="wordDisplay" role="alert" aria-live="polite">Press Start Round to begin!</div>
+            <div id="timerDisplay" class="timer" aria-live="polite"></div>
+            <button id="startRoundBtn" onclick="startRound()" aria-label="Start the round"><i class="fas fa-play"></i> Start Round</button>
+            <div id="gameControls" class="button-group hidden">
+                <button id="doneBtn" onclick="doneTurn()" aria-label="Mark song as done"><i class="fas fa-check"></i> Done</button>
+                <button id="forfeitBtn" onclick="forfeitTurn()" aria-label="Forfeit this turn"><i class="fas fa-forward"></i> Forfeit</button>
+                <button id="nextTeamBtn" onclick="nextTeam()" aria-label="Proceed to next team" class="hidden"><i class="fas fa-arrow-right"></i> Next Team</button>
+                <button id="nextWordBtn" onclick="proposeNextWord()" aria-label="Propose moving to next word"><i class="fas fa-sync"></i> Next Word</button>
+            </div>
+            <button id="endGameBtn" onclick="endGame()" aria-label="End the game and view scores"><i class="fas fa-flag-checkered"></i> End Game</button>
+            <button id="shareBtn" onclick="shareApp()" aria-label="Share Gauntlet Mode"><i class="fas fa-share-alt"></i> Share Game</button>
+            <div id="wordCountDisplay"></div>
+            <div id="feedback" role="status" aria-live="polite"></div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settingsTab" class="tab-content" style="display: none;">
+            <h1>Settings <a href="custom-word-list.md" target="_blank" class="help-icon" aria-label="View custom word list guide"><i class="fas fa-question-circle"></i></a></h1>
+            <div class="settings-group">
+                <fieldset>
+                    <legend>Word List Management</legend>
+                    <input type="url" id="customSheetUrl" placeholder="Enter custom Google Sheet CSV URL" aria-label="Enter custom Google Sheet CSV URL">
+                    <button onclick="saveCustomSheetUrl()" aria-label="Save custom Google Sheet URL"><i class="fas fa-save"></i> Save Sheet URL</button>
+                    <button onclick="useDefaultSheet()" aria-label="Use default word list"><i class="fas fa-undo"></i> Use Default Word List</button>
+                    <button onclick="refreshWordList()" aria-label="Refresh word list from current sheet"><i class="fas fa-sync"></i> Refresh Word List</button>
+                </fieldset>
+            </div>
+            <div class="settings-group">
+                <fieldset>
+                    <legend>Game Controls</legend>
+                    <select id="timerSelectSettings" aria-label="Select timer duration">
+                        <option value="15">15 Seconds</option>
+                        <option value="30">30 Seconds</option>
+                    </select>
+                    <button onclick="saveTimerDuration()" aria-label="Save timer duration"><i class="fas fa-save"></i> Save Timer</button>
+                    <button id="toggleLeaderboard" onclick="toggleLeaderboard()" aria-label="Toggle leaderboard visibility"><i class="fas fa-trophy"></i> Show Leaderboard</button>
+                    <button onclick="resetGame()" aria-label="Reset game, clearing all data"><i class="fas fa-redo"></i> Reset Game</button>
+                </fieldset>
+            </div>
+            <div id="leaderboard">
+                <h2>Leaderboard</h2>
+                <ul id="leaderboardList"></ul>
+            </div>
+            <div id="feedbackSettings" role="status" aria-live="polite"></div>
+        </div>
+    </div>
+
+    <div class="app-version">App Version: 2.0.0-beta</div>
+    <div id="updateNotice" class="update-notice">New version available! Refresh to update.</div>
+    <div class="copyright">© 2025 Izzoe. All rights reserved. Unauthorized copying prohibited.</div>
+
+    <script src="js/script-gauntlet.js"></script>
+</body>
+</html>
