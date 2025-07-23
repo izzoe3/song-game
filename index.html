@@ -200,7 +200,6 @@
         #leaderboard, #finalLeaderboard {
             margin-top: 20px;
             text-align: left;
-            display: none;
         }
         #leaderboard h2, #finalLeaderboard h2 {
             font-size: 1.2rem;
@@ -399,11 +398,12 @@
             <h2>Game Over!</h2>
             <p id="endGameMessage">Final scores:</p>
             <div id="finalLeaderboard">
+                <h2>Leaderboard</h2>
                 <ul id="finalLeaderboardList"></ul>
             </div>
             <div class="button-group">
-                <button onclick="closeEndGameModal()" aria-label="Close end game modal"><i class="fas fa-times"></i> Close Window</button>
-                <button onclick="continueGame()" aria-label="Continue current game"><i class="fas fa-play"></i> Continue</button>
+                <button onclick="closeEndGameModal()" aria-label="End current session"><i class="fas fa-times"></i> End Session</button>
+                <button onclick="continueGame()" aria-label="Resume current game"><i class="fas fa-play"></i> Resume Game</button>
                 <button onclick="startNewRegularGame()" aria-label="Start a new Regular Mode game"><i class="fas fa-users"></i> New Regular Game</button>
                 <button onclick="changeMode()" aria-label="Change game mode"><i class="fas fa-redo"></i> Change Mode</button>
             </div>
@@ -562,6 +562,7 @@
                     const parsed = JSON.parse(state);
                     // Validate players object
                     players = (parsed.players && typeof parsed.players === 'object' && Object.keys(parsed.players).length) ? parsed.players : {};
+                    console.log('Loaded players from localStorage:', JSON.stringify(players)); // Debug log
                     usedWords = parsed.usedWords && parsed.usedWords.english && parsed.usedWords.malay ? parsed.usedWords : { english: [], malay: [] };
                     gameMode = parsed.gameMode || 'regular';
                     languageMode = parsed.languageMode || 'en';
@@ -569,7 +570,6 @@
                     currentWord = parsed.currentWord || '';
                     currentSheetUrl = parsed.currentSheetUrl || defaultSheetUrl;
                     console.log('Session state loaded:', parsed);
-                    console.log('Loaded players:', players); // Debug log
                     document.getElementById('welcomeModal').style.display = 'none';
                     document.getElementById('modeModal').style.display = 'none';
                     document.getElementById('playerModal').style.display = 'none';
@@ -823,10 +823,15 @@
         function endGame() {
             if (gameMode === 'casual') return;
             console.log('Ending game, current players:', JSON.stringify(players)); // Debug log
+            const finalLeaderboard = document.getElementById('finalLeaderboard');
             const finalLeaderboardList = document.getElementById('finalLeaderboardList');
             const endGameMessage = document.getElementById('endGameMessage');
+            finalLeaderboard.style.display = 'block'; // Ensure visibility
             finalLeaderboardList.innerHTML = ''; // Clear previous content
             const fragment = document.createDocumentFragment(); // Use fragment for performance
+
+            console.log('Final leaderboard DOM:', finalLeaderboard); // Debug log
+            console.log('Players object:', players, 'Type:', typeof players, 'Keys:', Object.keys(players)); // Debug log
 
             if (!players || typeof players !== 'object' || Object.keys(players).length === 0) {
                 endGameMessage.textContent = 'No players added. Start a new game!';
@@ -839,7 +844,7 @@
                 console.log('Sorted players for leaderboard:', sortedPlayers); // Debug log
                 const maxScore = sortedPlayers[0][1];
                 const isTie = sortedPlayers.filter(([_, score]) => score === maxScore).length > 1;
-                endGameMessage.textContent = isTie ? 'It’s a tie! Continue playing or start a new game.' : 'Final scores:';
+                endGameMessage.textContent = isTie ? 'It’s a tie! Resume or start a new game.' : 'Final scores:';
                 if (sortedPlayers.every(([_, score]) => score === 0)) {
                     endGameMessage.textContent = 'No scores earned. Play to earn points!';
                     const li = document.createElement('li');
@@ -848,13 +853,15 @@
                 } else {
                     sortedPlayers.forEach(([name, score]) => {
                         const li = document.createElement('li');
-                        li.textContent = `${name}: ${score} points`;
+                        li.textContent = `${name}: ${score} point${score === 1 ? '' : 's'}`;
+                        li.setAttribute('aria-label', `${name} has ${score} point${score === 1 ? '' : 's'}`);
                         fragment.appendChild(li);
                     });
                 }
             }
 
             finalLeaderboardList.appendChild(fragment);
+            console.log('Final leaderboard list HTML:', finalLeaderboardList.innerHTML); // Debug log
             document.getElementById('endGameModal').style.display = 'flex';
             document.getElementById('feedback').textContent = 'Game ended! Check the final scores.';
             document.getElementById('feedback').className = 'green fade-in';
@@ -863,8 +870,22 @@
 
         function closeEndGameModal() {
             document.getElementById('endGameModal').style.display = 'none';
-            document.getElementById('feedback').textContent = 'Modal closed. Continue playing or end game again.';
+            players = {};
+            usedWords = { english: [], malay: [] };
+            currentWord = '';
+            document.getElementById('wordDisplay').textContent = '';
+            document.getElementById('wordDisplay').classList.remove('fade-in');
+            document.getElementById('playerSelect').innerHTML = '<option value="">Select Player</option>';
+            document.getElementById('removePlayerSelect').innerHTML = '<option value="">Select Player to Remove</option>';
+            document.getElementById('leaderboardList').innerHTML = '';
+            document.getElementById('gameTab').style.display = 'none';
+            document.getElementById('settingsTab').style.display = 'none';
+            document.getElementById('modeModal').style.display = 'flex';
+            document.getElementById('feedback').textContent = 'Session ended. Choose a new game mode.';
             document.getElementById('feedback').className = 'green fade-in';
+            saveSessionState();
+            updateWordCount();
+            console.log('Session ended, players reset:', players); // Debug log
         }
 
         function continueGame() {
@@ -1124,7 +1145,7 @@
             leaderboardList.innerHTML = '';
             Object.entries(players).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
                 const li = document.createElement('li');
-                li.innerHTML = `${name}: ${score} points <button class="score-btn" onclick="incrementScore('${name}')" aria-label="Add point to ${name}"><i class="fas fa-plus"></i></button><button class="score-btn" onclick="decrementScore('${name}')" aria-label="Remove point from ${name}"><i class="fas fa-minus"></i></button>`;
+                li.innerHTML = `${name}: ${score} point${score === 1 ? '' : 's'} <button class="score-btn" onclick="incrementScore('${name}')" aria-label="Add point to ${name}"><i class="fas fa-plus"></i></button><button class="score-btn" onclick="decrementScore('${name}')" aria-label="Remove point from ${name}"><i class="fas fa-minus"></i></button>`;
                 leaderboardList.appendChild(li);
             });
             saveSessionState();
