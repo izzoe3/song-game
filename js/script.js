@@ -7,7 +7,7 @@ let players = {};
         const defaultSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ5MX7qFT32Er41i6EPORV5GH9xsIlh6nwNxsV9_qGTL6PHvDBvNb9I5PhlTycbQyb5-f9ffg4BE5FB/pub?output=csv';
         let currentSheetUrl = defaultSheetUrl;
         let wordLists = { english: [], malay: [] };
-        const APP_VERSION = '1.4.2';
+        const APP_VERSION = '1.5.0';
         let deferredPrompt;
 
         window.addEventListener('beforeinstallprompt', (e) => {
