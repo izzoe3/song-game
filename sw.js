@@ -1,4 +1,4 @@
-const CACHE_NAME = 'song-game-cache-v1.5.0';
+const CACHE_NAME = 'song-game-cache-v2.0.0-beta';
 const urlsToCache = [
     './',
     './index.html',
