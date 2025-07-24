@@ -1,0 +1,27 @@
+name: Deploy Song Game Beta to Subfolder
+     on:
+       push:
+         branches:
+           - develop
+       workflow_dispatch:
+     permissions:
+       contents: write
+     concurrency:
+       group: "beta-pages"
+       cancel-in-progress: false
+     jobs:
+       deploy:
+         runs-on: ubuntu-latest
+         steps:
+           - name: Checkout
+             uses: actions/checkout@v4
+             with:
+               fetch-depth: 0
+           - name: Deploy Version 2.0.0-beta to Subfolder
+             uses: peaceiris/actions-gh-pages@v4
+             with:
+               github_token: ${{ secrets.GITHUB_TOKEN }}
+               publish_dir: .
+               destination_dir: v2.0.0-beta
+               publish_branch: main
+               keep_files: true
