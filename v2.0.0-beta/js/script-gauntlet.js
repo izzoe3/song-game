@@ -12,6 +12,8 @@ let deferredPrompt;
 let gameActive = false;
 let currentTeamIndex = 0;
 let timerInterval;
+let isGracePeriod = false;
+let hasTurnEnded = false;
 
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -63,7 +65,8 @@ function saveSessionState() {
         currentSheetUrl,
         timerDuration,
         appVersion: APP_VERSION,
-        currentTeamIndex
+        currentTeamIndex,
+        hasTurnEnded
     };
     try {
         localStorage.setItem('gauntletGameState', JSON.stringify(state));
@@ -87,6 +90,7 @@ function loadSessionState() {
             currentSheetUrl = parsed.currentSheetUrl || defaultSheetUrl;
             timerDuration = parsed.timerDuration || 15;
             currentTeamIndex = parsed.currentTeamIndex || 0;
+            hasTurnEnded = parsed.hasTurnEnded || false;
             console.log('Session state loaded:', parsed);
             document.getElementById('playerInput').value = Object.keys(teams).join(', ');
             document.getElementById('languageSelect').value = languageMode;
@@ -107,14 +111,20 @@ function loadSessionState() {
                             showFeedback('Session restored! Start or resume the game.', 'green');
                             document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
                             document.getElementById('wordDisplay').textContent = currentWord || 'Press Start Round to begin!';
-                            if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
+                            if (currentWord) {
+                                document.getElementById('wordDisplay').classList.add('fade-in');
+                                startGracePeriod();
+                            }
                         }
                     });
                 } else {
                     showFeedback('Session restored! Start or resume the game.', 'green');
                     document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
                     document.getElementById('wordDisplay').textContent = currentWord || 'Press Start Round to begin!';
-                    if (currentWord) document.getElementById('wordDisplay').classList.add('fade-in');
+                    if (currentWord) {
+                        document.getElementById('wordDisplay').classList.add('fade-in');
+                        startGracePeriod();
+                    }
                 }
             } else {
                 document.getElementById('welcomeModal').style.display = 'flex';
@@ -232,6 +242,7 @@ function confirmChangeMode(confirmed) {
     currentWord = '';
     currentTeamIndex = 0;
     gameActive = false;
+    hasTurnEnded = false;
     clearInterval(timerInterval);
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('wordDisplay').classList.remove('fade-in');
@@ -264,12 +275,13 @@ function startGame() {
     document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
     document.querySelector('.tab-button[onclick="showTab(\'settings\')"]').classList.remove('active');
     currentTeamIndex = 0;
+    hasTurnEnded = false;
     document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
-    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('startRoundBtn').classList.add('hidden');
     document.getElementById('gameControls').classList.add('hidden');
     fetchWords().then(success => {
         if (success) {
-            showFeedback('Game started! Press Start Round to begin.', 'green');
+            showFeedback('Game started! New word will be displayed.', 'green');
             generateWord(true);
             updateLeaderboard();
             updateWordCount();
@@ -415,6 +427,28 @@ function getAvailableWords() {
     return availableWords;
 }
 
+function startGracePeriod() {
+    isGracePeriod = true;
+    document.getElementById('startRoundBtn').classList.add('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
+    let graceTime = 5;
+    document.getElementById('timerDisplay').textContent = `Grace Period: ${graceTime}s`;
+    document.getElementById('timerDisplay').classList.add('timer-running');
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        graceTime--;
+        document.getElementById('timerDisplay').textContent = `Grace Period: ${graceTime}s`;
+        if (graceTime <= 0) {
+            clearInterval(timerInterval);
+            document.getElementById('timerDisplay').classList.remove('timer-running');
+            document.getElementById('timerDisplay').textContent = '';
+            isGracePeriod = false;
+            document.getElementById('startRoundBtn').classList.remove('hidden');
+            showFeedback('Grace period ended. Start the round!', 'green');
+        }
+    }, 1000);
+}
+
 function generateWord(initial = false) {
     let lang = languageMode;
     let wordList = [];
@@ -434,8 +468,12 @@ function generateWord(initial = false) {
         document.getElementById('wordDisplay').textContent = 'No more words available.';
         document.getElementById('wordDisplay').classList.add('fade-in');
         showFeedback(`No more ${usedWordsKey === 'english' ? 'English' : 'Malay'} words available. Refresh the word list in Settings.`, 'red');
-        document.getElementById('startRoundBtn').classList.remove('hidden');
-        document.getElementById('gameControls').classList.add('hidden');
+        document.getElementById('startRoundBtn').classList.add('hidden');
+        document.getElementById('gameControls').classList.remove('hidden');
+        document.getElementById('doneBtn').classList.add('hidden');
+        document.getElementById('forfeitBtn').classList.add('hidden');
+        document.getElementById('nextTeamBtn').classList.add('hidden');
+        document.getElementById('nextWordBtn').classList.remove('hidden');
         updateWordCount();
         return;
     }
@@ -444,33 +482,45 @@ function generateWord(initial = false) {
     document.getElementById('wordDisplay').textContent = currentWord;
     document.getElementById('wordDisplay').classList.add('fade-in');
     document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
-    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('startRoundBtn').classList.add('hidden');
     document.getElementById('gameControls').classList.add('hidden');
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.add('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
+    hasTurnEnded = false;
+    startGracePeriod();
     saveSessionState();
     updateWordCount();
 }
 
 function startRound() {
-    if (!currentWord) {
-        generateWord(true);
+    if (!currentWord || isGracePeriod) {
+        return;
     }
     gameActive = true;
+    hasTurnEnded = false;
     document.getElementById('startRoundBtn').classList.add('hidden');
     document.getElementById('gameControls').classList.remove('hidden');
+    document.getElementById('doneBtn').classList.remove('hidden');
+    document.getElementById('forfeitBtn').classList.remove('hidden');
     document.getElementById('nextTeamBtn').classList.add('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
     let timeLeft = timerDuration;
     document.getElementById('timerDisplay').textContent = `Time: ${timeLeft}s`;
     document.getElementById('timerDisplay').classList.add('timer-running');
+    clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;
         document.getElementById('timerDisplay').textContent = `Time: ${timeLeft}s`;
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
             document.getElementById('timerDisplay').classList.remove('timer-running');
-            showFeedback(`Time's up for ${Object.keys(teams)[currentTeamIndex]}! Forfeit or continue.`, 'red');
-            document.getElementById('nextTeamBtn').classList.remove('hidden');
-            document.getElementById('doneBtn').classList.add('hidden');
+            showFeedback(`Time's up for ${Object.keys(teams)[currentTeamIndex]}! Please press Done or Forfeit.`, 'red');
+            document.getElementById('doneBtn').classList.remove('hidden');
             document.getElementById('forfeitBtn').classList.remove('hidden');
+            document.getElementById('nextTeamBtn').classList.add('hidden');
+            document.getElementById('nextWordBtn').classList.remove('hidden');
         }
     }, 1000);
 }
@@ -478,12 +528,15 @@ function startRound() {
 function doneTurn() {
     clearInterval(timerInterval);
     document.getElementById('timerDisplay').classList.remove('timer-running');
+    document.getElementById('timerDisplay').textContent = '';
     const currentTeam = Object.keys(teams)[currentTeamIndex];
     teams[currentTeam] = (teams[currentTeam] || 0) + 1;
     showFeedback(`Nice singing, ${currentTeam}! You earn 1 point!`, 'green');
-    document.getElementById('nextTeamBtn').classList.remove('hidden');
     document.getElementById('doneBtn').classList.add('hidden');
     document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.remove('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
+    hasTurnEnded = true;
     updateLeaderboard();
     saveSessionState();
 }
@@ -491,41 +544,69 @@ function doneTurn() {
 function forfeitTurn() {
     clearInterval(timerInterval);
     document.getElementById('timerDisplay').classList.remove('timer-running');
+    document.getElementById('timerDisplay').textContent = '';
     showFeedback(`${Object.keys(teams)[currentTeamIndex]} forfeited their turn.`, 'red');
-    document.getElementById('nextTeamBtn').classList.remove('hidden');
     document.getElementById('doneBtn').classList.add('hidden');
     document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.remove('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
+    hasTurnEnded = true;
 }
 
 function nextTeam() {
+    clearInterval(timerInterval);
+    document.getElementById('timerDisplay').classList.remove('timer-running');
+    document.getElementById('timerDisplay').textContent = '';
     currentTeamIndex = (currentTeamIndex + 1) % Object.keys(teams).length;
     document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
-    document.getElementById('startRoundBtn').classList.remove('hidden');
-    document.getElementById('gameControls').classList.add('hidden');
-    document.getElementById('timerDisplay').textContent = '';
     showFeedback(`Next up: ${Object.keys(teams)[currentTeamIndex]}.`, 'green');
+    document.getElementById('startRoundBtn').classList.add('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.add('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
+    hasTurnEnded = false;
+    startRound();
     saveSessionState();
 }
 
 function proposeNextWord() {
     document.getElementById('nextWordModal').style.display = 'flex';
+    document.getElementById('startRoundBtn').classList.add('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.add('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
 }
 
 function confirmNextWord(confirmed) {
     document.getElementById('nextWordModal').style.display = 'none';
     if (!confirmed) {
         showFeedback('Continuing with the current word.', 'green');
-        document.getElementById('startRoundBtn').classList.remove('hidden');
-        document.getElementById('gameControls').classList.add('hidden');
+        document.getElementById('startRoundBtn').classList.add('hidden');
+        document.getElementById('gameControls').classList.remove('hidden');
+        document.getElementById('doneBtn').classList.remove('hidden');
+        document.getElementById('forfeitBtn').classList.remove('hidden');
+        document.getElementById('nextTeamBtn').classList.add('hidden');
+        document.getElementById('nextWordBtn').classList.remove('hidden');
+        if (!hasTurnEnded) {
+            startRound();
+        }
         return;
     }
-    generateWord();
+    if (hasTurnEnded) {
+        currentTeamIndex = (currentTeamIndex + 1) % Object.keys(teams).length;
+    }
+    generateWord(true);
     showFeedback('New word generated!', 'green');
 }
 
 function endGame() {
     clearInterval(timerInterval);
     gameActive = false;
+    hasTurnEnded = false;
     const finalLeaderboardList = document.getElementById('finalLeaderboardList');
     finalLeaderboardList.innerHTML = '';
     const sortedTeams = Object.entries(teams).sort((a, b) => b[1] - a[1]);
@@ -549,8 +630,12 @@ function endGame() {
     }
     document.getElementById('endGameModal').style.display = 'flex';
     document.getElementById('timerDisplay').classList.remove('timer-running');
-    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('startRoundBtn').classList.add('hidden');
     document.getElementById('gameControls').classList.add('hidden');
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.add('hidden');
+    document.getElementById('nextWordBtn').classList.add('hidden');
     showFeedback('Game ended! Check the final scores.', 'green');
     saveSessionState();
 }
@@ -562,6 +647,7 @@ function closeEndGameModal() {
     currentWord = '';
     currentTeamIndex = 0;
     gameActive = false;
+    hasTurnEnded = false;
     clearInterval(timerInterval);
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('wordDisplay').classList.remove('fade-in');
@@ -570,10 +656,12 @@ function closeEndGameModal() {
     document.getElementById('leaderboardList').innerHTML = '';
     document.getElementById('gameTab').style.display = 'none';
     document.getElementById('settingsTab').style.display = 'none';
-    document.getElementById('welcomeModal').style.display = 'flex';
-    showFeedback('Session ended. Start a new game or change modes.', 'green');
+    document.getElementById('welcomeModal').style.display = 'none';
+    document.getElementById('modeModal').style.display = 'flex';
+    showFeedback('Session ended. Choose a new game mode.', 'green');
     saveSessionState();
     updateWordCount();
+    window.location.href = 'index.html#modeModal';
 }
 
 function continueGame() {
@@ -588,9 +676,15 @@ function continueGame() {
     document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
     document.querySelector('.tab-button[onclick="showTab(\'settings\')"]').classList.remove('active');
     document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
-    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('startRoundBtn').classList.add('hidden');
     document.getElementById('gameControls').classList.add('hidden');
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
+    document.getElementById('nextTeamBtn').classList.add('hidden');
+    document.getElementById('nextWordBtn').classList.remove('hidden');
     showFeedback('Game resumed! Start the next round.', 'green');
+    hasTurnEnded = false;
+    startGracePeriod();
     saveSessionState();
 }
 
@@ -600,6 +694,7 @@ function startNewGauntletGame() {
     currentWord = '';
     currentTeamIndex = 0;
     gameActive = false;
+    hasTurnEnded = false;
     clearInterval(timerInterval);
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('wordDisplay').classList.remove('fade-in');
@@ -662,6 +757,7 @@ function confirmReset(confirmed) {
     useEnglish = true;
     currentTeamIndex = 0;
     gameActive = false;
+    hasTurnEnded = false;
     clearInterval(timerInterval);
     currentSheetUrl = defaultSheetUrl;
     localStorage.removeItem('gauntletCustomSheetUrl');
