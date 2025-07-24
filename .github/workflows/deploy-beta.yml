@@ -1,15 +1,15 @@
 name: Deploy Song Game Beta to Subfolder
-     on:
+on:
        push:
          branches:
            - develop
        workflow_dispatch:
-     permissions:
+permissions:
        contents: write
-     concurrency:
+concurrency:
        group: "beta-pages"
        cancel-in-progress: false
-     jobs:
+jobs:
        deploy:
          runs-on: ubuntu-latest
          steps:
