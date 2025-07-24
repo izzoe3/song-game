@@ -2,8 +2,11 @@ const CACHE_NAME = 'song-game-cache-v2.0.0-beta';
 const urlsToCache = [
     './',
     './index.html',
+    './index-gauntlet.html',
     './css/styles.css',
+    './css/styles-gauntlet.css',
     './js/script.js',
+    './js/script-gauntlet.js',
     './manifest.json',
     './version.txt',
     './icons/icon-192.png',
@@ -19,7 +22,7 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Opened cache');
-                return cache.addAll(urlsToCache);
+                return cache.addAll(urlsToCache.filter(url => url.startsWith('http') || url.startsWith('/')));
             })
             .catch(err => console.error('Cache addAll failed:', err))
     );
@@ -27,6 +30,12 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('fetch', event => {
+    const requestUrl = event.request.url;
+    if (requestUrl.startsWith('chrome-extension://')) {
+        console.log(`Skipping cache for unsupported scheme: ${requestUrl}`);
+        event.respondWith(fetch(event.request));
+        return;
+    }
     event.respondWith(
         caches.match(event.request)
             .then(response => {
@@ -35,14 +44,15 @@ self.addEventListener('fetch', event => {
                 }
                 return fetch(event.request).then(
                     response => {
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                        if (!response || response.status !== 200 || response.type !== 'basic' || requestUrl.startsWith('chrome-extension://')) {
                             return response;
                         }
                         const responseToCache = response.clone();
                         caches.open(CACHE_NAME)
                             .then(cache => {
                                 cache.put(event.request, responseToCache);
-                            });
+                            })
+                            .catch(err => console.error('Cache put failed:', err));
                         return response;
                     }
                 ).catch(() => {

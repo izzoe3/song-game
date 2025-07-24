@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <base href="/song-game/v2.0.0-beta/">   
+    <base href="/song-game/v2.0.0-beta/"> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -30,13 +30,10 @@
     <!-- Welcome Modal -->
     <div id="welcomeModal" class="modal">
         <div class="modal-content">
-            <h2>Welcome to Gauntlet Mode!</h2>
+            <h2>Song Association Game - Gauntlet Mode</h2>
             <p>Sing one song per turn containing a shared word in English or Malay within 15 or 30 seconds. Teams take turns until all agree to move to the next word. Works offline after initial load!</p>
-            <button onclick="showSetupModal()" aria-label="Get started with Gauntlet Mode"><i class="fas fa-play"></i> Get Started</button>
-            <button onclick="installApp()" id="installButton" class="hidden" aria-label="Install the app"><i class="fas fa-download"></i> Install App</button>
-            <button onclick="shareApp()" aria-label="Share Gauntlet Mode"><i class="fas fa-share-alt"></i> Share Game</button>
-            <img id="qrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://izzoe3.github.io/song-game/" alt="QR code to share game">
-            <button onclick="window.location.href='index.html'" aria-label="Return to main game"><i class="fas fa-arrow-left"></i> Back to Main Game</button>
+            <button onclick="showSetupModal()" aria-label="Start Gauntlet Mode"><i class="fas fa-play"></i> Start Game</button>
+            <button onclick="changeGameMode()" aria-label="Change game mode"><i class="fas fa-undo"></i> Change Mode</button>
         </div>
     </div>
 
@@ -72,7 +69,7 @@
                 <button onclick="closeEndGameModal()" aria-label="End current session"><i class="fas fa-times"></i> End Session</button>
                 <button onclick="continueGame()" aria-label="Resume current game"><i class="fas fa-play"></i> Resume Game</button>
                 <button onclick="startNewGauntletGame()" aria-label="Start a new Gauntlet Mode game"><i class="fas fa-users"></i> New Gauntlet Game</button>
-                <button onclick="window.location.href='index.html'" aria-label="Return to main game"><i class="fas fa-arrow-left"></i> Back to Main Game</button>
+                <button onclick="changeGameMode()" aria-label="Return to mode selection"><i class="fas fa-undo"></i> Change Mode</button>
             </div>
         </div>
     </div>
@@ -94,6 +91,16 @@
             <p>All teams agree to move to the next word?</p>
             <button onclick="confirmNextWord(true)" aria-label="Confirm move to next word"><i class="fas fa-check"></i> Confirm</button>
             <button onclick="confirmNextWord(false)" aria-label="Cancel move to next word"><i class="fas fa-times"></i> Cancel</button>
+        </div>
+    </div>
+
+    <!-- Change Mode Confirmation Modal -->
+    <div id="changeModeModal" class="modal">
+        <div class="modal-content">
+            <h2>Confirm Change Mode</h2>
+            <p>Changing game mode will clear all scores, team names, and used words. This action is irreversible. Proceed?</p>
+            <button onclick="confirmChangeMode(true)" aria-label="Confirm change game mode"><i class="fas fa-check"></i> Yes, Change Mode</button>
+            <button onclick="confirmChangeMode(false)" aria-label="Cancel change game mode"><i class="fas fa-times"></i> Cancel</button>
         </div>
     </div>
 
@@ -145,6 +152,7 @@
                     <button onclick="saveTimerDuration()" aria-label="Save timer duration"><i class="fas fa-save"></i> Save Timer</button>
                     <button id="toggleLeaderboard" onclick="toggleLeaderboard()" aria-label="Toggle leaderboard visibility"><i class="fas fa-trophy"></i> Show Leaderboard</button>
                     <button onclick="resetGame()" aria-label="Reset game, clearing all data"><i class="fas fa-redo"></i> Reset Game</button>
+                    <button onclick="changeGameMode()" aria-label="Change game mode"><i class="fas fa-undo"></i> Change Game Mode</button>
                 </fieldset>
             </div>
             <div id="leaderboard">

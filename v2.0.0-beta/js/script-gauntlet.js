@@ -16,7 +16,6 @@ let timerInterval;
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    document.getElementById('installButton').classList.remove('hidden');
     console.log('Install prompt captured');
 });
 
@@ -47,12 +46,11 @@ window.addEventListener('load', () => {
             const radius = diameter / 2;
             ripple.style.width = ripple.style.height = `${diameter}px`;
             ripple.style.left = `${e.clientX - rect.left - radius}px`;
-            ripple.style.top = `${e.clientX - rect.top - radius}px`;
+            ripple.style.top = `${e.clientY - rect.top - radius}px`;
             btn.appendChild(ripple);
             setTimeout(() => ripple.remove(), 600);
         });
     });
-    document.getElementById('welcomeModal').style.display = 'flex';
 });
 
 function saveSessionState() {
@@ -175,7 +173,7 @@ async function checkForUpdates() {
 async function shareApp() {
     const shareData = {
         title: 'Song Association Game - Gauntlet Mode',
-        text: 'Sing one song per turn for a shared word in timed rounds! Play offline with teams.',
+        text: 'Sing one song per turn for a shared word in timed rounds! Play offline with teams in Gauntlet Mode.',
         url: 'https://izzoe3.github.io/song-game/'
     };
     try {
@@ -194,6 +192,7 @@ async function shareApp() {
 function installApp() {
     if (!deferredPrompt) {
         showFeedback('App installation not available. Add to home screen manually.', 'red');
+        console.warn('Install prompt unavailable');
         return;
     }
     deferredPrompt.prompt();
@@ -204,14 +203,47 @@ function installApp() {
             showFeedback('App installation canceled.', 'red');
         }
         deferredPrompt = null;
-        document.getElementById('installButton').classList.add('hidden');
     });
 }
 
 function showSetupModal() {
     document.getElementById('welcomeModal').style.display = 'none';
     document.getElementById('setupModal').style.display = 'flex';
-    document.getElementById('playerInput').focus();
+}
+
+function changeGameMode() {
+    document.getElementById('changeModeModal').style.display = 'flex';
+}
+
+function confirmChangeMode(confirmed) {
+    document.getElementById('changeModeModal').style.display = 'none';
+    if (!confirmed) {
+        showFeedback('Mode change canceled.', 'green');
+        return;
+    }
+    localStorage.removeItem('songGameState');
+    localStorage.removeItem('gauntletGameState');
+    localStorage.removeItem('songGameWords');
+    localStorage.removeItem('gauntletGameWords');
+    localStorage.removeItem('customSheetUrl');
+    localStorage.removeItem('gauntletCustomSheetUrl');
+    teams = {};
+    usedWords = { english: [], malay: [] };
+    currentWord = '';
+    currentTeamIndex = 0;
+    gameActive = false;
+    clearInterval(timerInterval);
+    document.getElementById('wordDisplay').textContent = '';
+    document.getElementById('wordDisplay').classList.remove('fade-in');
+    document.getElementById('currentTeam').textContent = 'Team: None';
+    document.getElementById('timerDisplay').textContent = '';
+    document.getElementById('leaderboardList').innerHTML = '';
+    document.getElementById('gameTab').style.display = 'none';
+    document.getElementById('settingsTab').style.display = 'none';
+    document.getElementById('welcomeModal').style.display = 'none';
+    document.getElementById('endGameModal').style.display = 'none';
+    showFeedback('Switching to mode selection...', 'green');
+    window.location.href = 'index.html#modeModal';
 }
 
 function startGame() {
@@ -219,31 +251,65 @@ function startGame() {
     languageMode = document.getElementById('languageSelect').value;
     timerDuration = parseInt(document.getElementById('timerSelect').value);
     if (!playerInput) {
-        showFeedback('Please enter at least one team name.', 'red');
+        showFeedback('Please enter at least one team name for Gauntlet Mode.', 'red');
         return;
     }
     teams = {};
     playerInput.split(',').map(name => name.trim()).filter(name => name).forEach(name => {
         teams[name] = 0;
     });
-    currentTeamIndex = Math.floor(Math.random() * Object.keys(teams).length);
-    usedWords = { english: [], malay: [] };
-    gameActive = true;
     document.getElementById('setupModal').style.display = 'none';
     document.getElementById('gameTab').style.display = 'block';
     document.getElementById('settingsTab').style.display = 'none';
     document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
     document.querySelector('.tab-button[onclick="showTab(\'settings\')"]').classList.remove('active');
+    currentTeamIndex = 0;
+    document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
+    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
     fetchWords().then(success => {
         if (success) {
             showFeedback('Game started! Press Start Round to begin.', 'green');
-            updateGameScreen();
+            generateWord(true);
+            updateLeaderboard();
+            updateWordCount();
         } else {
             showFeedback('Failed to load words. Check your internet or custom sheet URL in Settings.', 'red');
-            gameActive = false;
         }
     });
     saveSessionState();
+}
+
+function loadCustomSheetUrl() {
+    const savedUrl = localStorage.getItem('gauntletCustomSheetUrl');
+    if (savedUrl) {
+        currentSheetUrl = savedUrl;
+        document.getElementById('customSheetUrl').value = savedUrl;
+    }
+}
+
+function saveCustomSheetUrl() {
+    const newUrl = document.getElementById('customSheetUrl').value.trim();
+    if (!newUrl) {
+        showFeedback('Please enter a valid Google Sheet CSV URL or use the default word list.', 'red');
+        return;
+    }
+    if (!newUrl.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/.*\/pub\?output=csv$/)) {
+        showFeedback('Invalid Google Sheet URL. Use a public CSV link (File > Share > Publish to web > Comma-separated values). See the help guide.', 'red');
+        return;
+    }
+    currentSheetUrl = newUrl;
+    localStorage.setItem('gauntletCustomSheetUrl', newUrl);
+    showFeedback('Custom sheet URL saved! Refreshing word list...', 'green');
+    refreshWordList();
+}
+
+function useDefaultSheet() {
+    currentSheetUrl = defaultSheetUrl;
+    localStorage.removeItem('gauntletCustomSheetUrl');
+    document.getElementById('customSheetUrl').value = '';
+    showFeedback('Reverted to default word list. Refreshing...', 'green');
+    refreshWordList();
 }
 
 async function fetchWords() {
@@ -278,6 +344,7 @@ async function fetchWords() {
         }
         wordLists.malay = rows.slice(1).map(row => row[malayCol]).filter(word => word && word !== '');
         wordLists.english = rows.slice(1).map(row => row[englishCol]).filter(word => word && word !== '');
+        console.log('Fetched words:', { english: wordLists.english.length, malay: wordLists.malay.length });
         if (wordLists.malay.length === 0 && wordLists.english.length === 0) {
             throw new Error('No valid words found in the word list. Add words to the Google Sheet.');
         }
@@ -300,96 +367,47 @@ async function fetchWords() {
                 return true;
             }
         }
-        showFeedback(`Error: Could not load word list: ${error.message}. Ensure the Google Sheet is public (CSV, “Anyone with the link”).`, 'red');
+        showFeedback(`Error: Could not load word list: ${error.message}. Ensure the Google Sheet is public (CSV, “Anyone with the link”). Retry in Settings or see the help guide.`, 'red');
         return false;
     }
 }
 
-function loadCustomSheetUrl() {
-    const savedUrl = localStorage.getItem('gauntletCustomSheetUrl');
-    if (savedUrl) {
-        currentSheetUrl = savedUrl;
-        document.getElementById('customSheetUrl').value = savedUrl;
-    }
-}
-
-function saveCustomSheetUrl() {
-    const newUrl = document.getElementById('customSheetUrl').value.trim();
-    const feedback = document.getElementById('feedbackSettings');
-    if (!newUrl) {
-        showFeedback('Please enter a valid Google Sheet CSV URL or use the default word list.', 'red');
-        return;
-    }
-    if (!newUrl.match(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/e\/.*\/pub\?output=csv$/)) {
-        showFeedback('Invalid Google Sheet URL. Use a public CSV link (File > Share > Publish to web > Comma-separated values). See the help guide.', 'red');
-        return;
-    }
-    currentSheetUrl = newUrl;
-    localStorage.setItem('gauntletCustomSheetUrl', newUrl);
-    showFeedback('Custom sheet URL saved! Refreshing word list...', 'green');
-    refreshWordList();
-}
-
-function useDefaultSheet() {
-    currentSheetUrl = defaultSheetUrl;
-    localStorage.removeItem('gauntletCustomSheetUrl');
-    document.getElementById('customSheetUrl').value = '';
-    showFeedback('Reverted to default word list. Refreshing...', 'green');
-    refreshWordList();
-}
-
 async function refreshWordList() {
-    const feedback = document.getElementById('feedbackSettings');
-    showFeedback('Refreshing word list...', 'fade-in');
+    showFeedback(`Refreshing word list from ${currentSheetUrl === defaultSheetUrl ? 'default' : 'custom'} sheet...`, 'fade-in');
     usedWords = { english: [], malay: [] };
     const success = await fetchWords();
     if (success) {
         showFeedback(`Word list refreshed! ${wordLists.english.length} English and ${wordLists.malay.length} Malay words available.`, 'green');
-        updateGameScreen();
+        generateWord(true);
         updateWordCount();
     }
 }
 
 function saveTimerDuration() {
     timerDuration = parseInt(document.getElementById('timerSelectSettings').value);
-    document.getElementById('timerSelect').value = timerDuration;
-    showFeedback(`Timer duration set to ${timerDuration} seconds.`, 'green');
+    showFeedback(`Timer set to ${timerDuration} seconds.`, 'green');
     saveSessionState();
 }
 
-function showTab(tabName) {
-    document.getElementById('gameTab').style.display = tabName === 'game' ? 'block' : 'none';
-    document.getElementById('settingsTab').style.display = tabName === 'settings' ? 'block' : 'none';
-    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-    document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
-    document.getElementById('feedback').textContent = '';
-    document.getElementById('feedback').classList.remove('fade-in');
-    document.getElementById('feedbackSettings').textContent = '';
-    document.getElementById('feedbackSettings').classList.remove('fade-in');
-    if (tabName === 'settings') {
-        document.getElementById('leaderboard').style.display = 'none';
-        document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
-    }
+function updateLeaderboard() {
+    const leaderboardList = document.getElementById('leaderboardList');
+    leaderboardList.innerHTML = '';
+    Object.entries(teams).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${name}: ${score} point${score === 1 ? '' : 's'}`;
+        leaderboardList.appendChild(li);
+    });
 }
 
-function updateGameScreen() {
-    if (!gameActive) return;
-    const currentTeam = Object.keys(teams)[currentTeamIndex];
-    document.getElementById('currentTeam').textContent = `Team: ${currentTeam}`;
-    document.getElementById('wordDisplay').textContent = currentWord || 'Press Start Round to begin!';
-    document.getElementById('timerDisplay').textContent = '';
-    document.getElementById('startRoundBtn').classList.toggle('hidden', !!currentWord);
-    document.getElementById('gameControls').classList.toggle('hidden', !currentWord);
-    document.getElementById('nextTeamBtn').classList.add('hidden');
-    updateWordCount();
-    saveSessionState();
+function updateWordCount() {
+    let availableWords = getAvailableWords();
+    document.getElementById('wordCountDisplay').textContent = `Words remaining: ${availableWords.length}`;
 }
 
 function getAvailableWords() {
     let availableWords = [];
     if (languageMode === 'both') {
         availableWords = [...wordLists.english.filter(word => !usedWords.english.includes(word)), ...wordLists.malay.filter(word => !usedWords.malay.includes(word))];
-        useEnglish = !useEnglish;
     } else {
         const usedWordsKey = languageMode === 'en' ? 'english' : 'malay';
         availableWords = wordLists[usedWordsKey].filter(word => !usedWords[usedWordsKey].includes(word));
@@ -397,68 +415,96 @@ function getAvailableWords() {
     return availableWords;
 }
 
-function startRound() {
-    const availableWords = getAvailableWords();
+function generateWord(initial = false) {
+    let lang = languageMode;
+    let wordList = [];
+    let usedWordsKey = '';
+    if (languageMode === 'both') {
+        lang = useEnglish ? 'en' : 'ms';
+        usedWordsKey = useEnglish ? 'english' : 'malay';
+        wordList = useEnglish ? wordLists.english : wordLists.malay;
+        useEnglish = !useEnglish;
+    } else {
+        lang = languageMode;
+        usedWordsKey = languageMode === 'en' ? 'english' : 'malay';
+        wordList = languageMode === 'en' ? wordLists.english : wordLists.malay;
+    }
+    const availableWords = wordList.filter(word => !usedWords[usedWordsKey].includes(word));
     if (availableWords.length === 0) {
-        endGame();
+        document.getElementById('wordDisplay').textContent = 'No more words available.';
+        document.getElementById('wordDisplay').classList.add('fade-in');
+        showFeedback(`No more ${usedWordsKey === 'english' ? 'English' : 'Malay'} words available. Refresh the word list in Settings.`, 'red');
+        document.getElementById('startRoundBtn').classList.remove('hidden');
+        document.getElementById('gameControls').classList.add('hidden');
+        updateWordCount();
         return;
     }
     currentWord = availableWords[Math.floor(Math.random() * availableWords.length)];
-    const usedWordsKey = wordLists.english.includes(currentWord) ? 'english' : 'malay';
     usedWords[usedWordsKey].push(currentWord);
     document.getElementById('wordDisplay').textContent = currentWord;
     document.getElementById('wordDisplay').classList.add('fade-in');
-    document.getElementById('startRoundBtn').classList.add('hidden');
-    document.getElementById('gameControls').classList.remove('hidden');
-    startTimer();
+    document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
+    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
     saveSessionState();
+    updateWordCount();
 }
 
-function startTimer() {
-    clearInterval(timerInterval);
+function startRound() {
+    if (!currentWord) {
+        generateWord(true);
+    }
+    gameActive = true;
+    document.getElementById('startRoundBtn').classList.add('hidden');
+    document.getElementById('gameControls').classList.remove('hidden');
+    document.getElementById('nextTeamBtn').classList.add('hidden');
     let timeLeft = timerDuration;
-    const timerDisplay = document.getElementById('timerDisplay');
-    timerDisplay.textContent = `${timeLeft}s`;
-    timerDisplay.setAttribute('aria-label', `${timeLeft} seconds remaining`);
-    document.getElementById('doneBtn').disabled = false;
-    document.getElementById('forfeitBtn').disabled = false;
+    document.getElementById('timerDisplay').textContent = `Time: ${timeLeft}s`;
+    document.getElementById('timerDisplay').classList.add('timer-running');
     timerInterval = setInterval(() => {
         timeLeft--;
-        timerDisplay.textContent = `${timeLeft}s`;
-        timerDisplay.setAttribute('aria-label', `${timeLeft} seconds remaining`);
+        document.getElementById('timerDisplay').textContent = `Time: ${timeLeft}s`;
         if (timeLeft <= 0) {
             clearInterval(timerInterval);
-            forfeitTurn(true);
+            document.getElementById('timerDisplay').classList.remove('timer-running');
+            showFeedback(`Time's up for ${Object.keys(teams)[currentTeamIndex]}! Forfeit or continue.`, 'red');
+            document.getElementById('nextTeamBtn').classList.remove('hidden');
+            document.getElementById('doneBtn').classList.add('hidden');
+            document.getElementById('forfeitBtn').classList.remove('hidden');
         }
     }, 1000);
 }
 
 function doneTurn() {
     clearInterval(timerInterval);
+    document.getElementById('timerDisplay').classList.remove('timer-running');
     const currentTeam = Object.keys(teams)[currentTeamIndex];
     teams[currentTeam] = (teams[currentTeam] || 0) + 1;
-    showFeedback(`${currentTeam} scored 1 point!`, 'green');
-    document.getElementById('doneBtn').disabled = true;
-    document.getElementById('forfeitBtn').disabled = true;
+    showFeedback(`Nice singing, ${currentTeam}! You earn 1 point!`, 'green');
     document.getElementById('nextTeamBtn').classList.remove('hidden');
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
     updateLeaderboard();
     saveSessionState();
 }
 
-function forfeitTurn(isTimeout = false) {
+function forfeitTurn() {
     clearInterval(timerInterval);
-    const currentTeam = Object.keys(teams)[currentTeamIndex];
-    showFeedback(isTimeout ? `${currentTeam}'s time is up!` : `${currentTeam} forfeited their turn.`, 'red');
-    document.getElementById('doneBtn').disabled = true;
-    document.getElementById('forfeitBtn').disabled = true;
+    document.getElementById('timerDisplay').classList.remove('timer-running');
+    showFeedback(`${Object.keys(teams)[currentTeamIndex]} forfeited their turn.`, 'red');
     document.getElementById('nextTeamBtn').classList.remove('hidden');
-    saveSessionState();
+    document.getElementById('doneBtn').classList.add('hidden');
+    document.getElementById('forfeitBtn').classList.add('hidden');
 }
 
 function nextTeam() {
     currentTeamIndex = (currentTeamIndex + 1) % Object.keys(teams).length;
-    updateGameScreen();
-    startTimer();
+    document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
+    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
+    document.getElementById('timerDisplay').textContent = '';
+    showFeedback(`Next up: ${Object.keys(teams)[currentTeamIndex]}.`, 'green');
+    saveSessionState();
 }
 
 function proposeNextWord() {
@@ -468,19 +514,18 @@ function proposeNextWord() {
 function confirmNextWord(confirmed) {
     document.getElementById('nextWordModal').style.display = 'none';
     if (!confirmed) {
-        showFeedback('Next word canceled. Continue with current word.', 'green');
+        showFeedback('Continuing with the current word.', 'green');
+        document.getElementById('startRoundBtn').classList.remove('hidden');
+        document.getElementById('gameControls').classList.add('hidden');
         return;
     }
-    currentTeamIndex = (currentTeamIndex + 1) % Object.keys(teams).length;
-    currentWord = '';
-    document.getElementById('wordDisplay').classList.remove('fade-in');
-    showFeedback('Moving to next word!', 'green');
-    updateGameScreen();
+    generateWord();
+    showFeedback('New word generated!', 'green');
 }
 
 function endGame() {
-    gameActive = false;
     clearInterval(timerInterval);
+    gameActive = false;
     const finalLeaderboardList = document.getElementById('finalLeaderboardList');
     finalLeaderboardList.innerHTML = '';
     const sortedTeams = Object.entries(teams).sort((a, b) => b[1] - a[1]);
@@ -503,6 +548,9 @@ function endGame() {
         });
     }
     document.getElementById('endGameModal').style.display = 'flex';
+    document.getElementById('timerDisplay').classList.remove('timer-running');
+    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
     showFeedback('Game ended! Check the final scores.', 'green');
     saveSessionState();
 }
@@ -513,13 +561,17 @@ function closeEndGameModal() {
     usedWords = { english: [], malay: [] };
     currentWord = '';
     currentTeamIndex = 0;
+    gameActive = false;
+    clearInterval(timerInterval);
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('wordDisplay').classList.remove('fade-in');
+    document.getElementById('currentTeam').textContent = 'Team: None';
+    document.getElementById('timerDisplay').textContent = '';
     document.getElementById('leaderboardList').innerHTML = '';
     document.getElementById('gameTab').style.display = 'none';
     document.getElementById('settingsTab').style.display = 'none';
     document.getElementById('welcomeModal').style.display = 'flex';
-    showFeedback('Session ended. Start a new game.', 'green');
+    showFeedback('Session ended. Start a new game or change modes.', 'green');
     saveSessionState();
     updateWordCount();
 }
@@ -530,14 +582,16 @@ function continueGame() {
         document.getElementById('setupModal').style.display = 'flex';
         return;
     }
-    gameActive = true;
     document.getElementById('endGameModal').style.display = 'none';
     document.getElementById('gameTab').style.display = 'block';
     document.getElementById('settingsTab').style.display = 'none';
     document.querySelector('.tab-button[onclick="showTab(\'game\')"]').classList.add('active');
     document.querySelector('.tab-button[onclick="showTab(\'settings\')"]').classList.remove('active');
-    showFeedback('Game resumed! Continue or start a new round.', 'green');
-    updateGameScreen();
+    document.getElementById('currentTeam').textContent = `Team: ${Object.keys(teams)[currentTeamIndex]}`;
+    document.getElementById('startRoundBtn').classList.remove('hidden');
+    document.getElementById('gameControls').classList.add('hidden');
+    showFeedback('Game resumed! Start the next round.', 'green');
+    saveSessionState();
 }
 
 function startNewGauntletGame() {
@@ -545,12 +599,17 @@ function startNewGauntletGame() {
     usedWords = { english: [], malay: [] };
     currentWord = '';
     currentTeamIndex = 0;
+    gameActive = false;
+    clearInterval(timerInterval);
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('wordDisplay').classList.remove('fade-in');
+    document.getElementById('currentTeam').textContent = 'Team: None';
+    document.getElementById('timerDisplay').textContent = '';
     document.getElementById('leaderboardList').innerHTML = '';
     document.getElementById('endGameModal').style.display = 'none';
     document.getElementById('setupModal').style.display = 'flex';
     document.getElementById('playerInput').value = '';
+    document.getElementById('playerInput').placeholder = 'Enter team names (e.g., Team A, Team B)';
     document.getElementById('languageSelect').value = languageMode;
     document.getElementById('timerSelect').value = timerDuration;
     showFeedback('Setup a new Gauntlet Mode game.', 'green');
@@ -558,15 +617,19 @@ function startNewGauntletGame() {
     updateWordCount();
 }
 
-function updateLeaderboard() {
-    const leaderboardList = document.getElementById('leaderboardList');
-    leaderboardList.innerHTML = '';
-    Object.entries(teams).sort((a, b) => b[1] - a[1]).forEach(([name, score]) => {
-        const li = document.createElement('li');
-        li.innerHTML = `${name}: ${score} point${score === 1 ? '' : 's'}`;
-        leaderboardList.appendChild(li);
-    });
-    saveSessionState();
+function showTab(tabName) {
+    document.getElementById('gameTab').style.display = tabName === 'game' ? 'block' : 'none';
+    document.getElementById('settingsTab').style.display = tabName === 'settings' ? 'block' : 'none';
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
+    document.getElementById('feedback').textContent = '';
+    document.getElementById('feedback').classList.remove('fade-in');
+    document.getElementById('feedbackSettings').textContent = '';
+    document.getElementById('feedbackSettings').classList.remove('fade-in');
+    if (tabName === 'settings') {
+        document.getElementById('leaderboard').style.display = 'none';
+        document.getElementById('toggleLeaderboard').innerHTML = '<i class="fas fa-trophy"></i> Show Leaderboard';
+    }
 }
 
 function toggleLeaderboard() {
@@ -597,14 +660,16 @@ function confirmReset(confirmed) {
     currentWord = '';
     languageMode = 'both';
     useEnglish = true;
-    timerDuration = 15;
+    currentTeamIndex = 0;
+    gameActive = false;
+    clearInterval(timerInterval);
     currentSheetUrl = defaultSheetUrl;
     localStorage.removeItem('gauntletCustomSheetUrl');
     document.getElementById('customSheetUrl').value = '';
-    document.getElementById('timerSelect').value = timerDuration;
-    document.getElementById('timerSelectSettings').value = timerDuration;
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('wordDisplay').classList.remove('fade-in');
+    document.getElementById('currentTeam').textContent = 'Team: None';
+    document.getElementById('timerDisplay').textContent = '';
     document.getElementById('leaderboardList').innerHTML = '';
     document.getElementById('gameTab').style.display = 'none';
     document.getElementById('settingsTab').style.display = 'none';
@@ -612,9 +677,4 @@ function confirmReset(confirmed) {
     showFeedback('Game reset successfully!', 'green');
     localStorage.removeItem('gauntletGameState');
     updateWordCount();
-}
-
-function updateWordCount() {
-    const availableWords = getAvailableWords();
-    document.getElementById('wordCountDisplay').textContent = `Words remaining: ${availableWords.length}`;
 }

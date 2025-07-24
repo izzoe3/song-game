@@ -2,7 +2,7 @@
     "name": "Song Association Game",
     "short_name": "Song Game",
     "description": "A fun PWA to play Song Association Game in Classic or Gauntlet Mode. Sing songs based on random words in English or Malay. Works offline!",
-    "start_url": "/song-game/index.html",
+    "start_url": "/song-game/v2.0.0-beta/index.html",
     "scope": "/song-game/",
     "display": "standalone",
     "background_color": "#1a1a3d",
